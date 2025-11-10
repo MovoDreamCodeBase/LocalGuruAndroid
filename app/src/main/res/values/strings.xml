@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Local Guru App</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="local_guru_today_s_priority_tasks">Today\'s Priority Tasks</string>
+    <string name="local_guru_progress">Progress</string>
+    <string name="local_guru_view_all">View All</string>
+</resources>

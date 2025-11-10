@@ -1,0 +1,32 @@
+package com.core.utils
+
+enum class CalenderFormat(val type: String) {
+    DD_MMM_YYYY("dd-MMM-yyyy"),
+    DD_MM_YYYY("dd MMM yyyy"),
+    YYYY_MM_DD("yyyy-MM-dd"),
+    DD_MMM("dd MMM"),
+    EEE_DD_MMM("EEE, dd MMM"),
+    YYYY_MM_DD_HH_MM("yyyy-MM-dd HH:mm"),
+    HH_MM("HH:mm"),
+    YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss"),
+    YYYY_MM_DD_HH_MM_SS_("yyyyMMddHHmmss"),
+    DD_MMM_YYYY_HH_MM_AA("dd MMM yyyy hh:mm aa"),
+    EEE_DD_MMM_YY("EEE, dd MMM yy"),
+    EEE_DD_MMM_YYYY("EEE dd MMM yyyy"),
+    DD_MMMM_YYYY("dd-MMMM-yyyy"),
+    MMM_DD_YYYY_HH_MM_AA("dd MMM yyyy hh:mm aa"),
+    YYYY_MM_DD_HH_MM_SS_AA("yyyy-MM-dd hh:mm:ss aa"),
+    MM_DD_YYYY("MM/dd/yyyy"),
+    DD_MM_YYYY_DASH("dd/MM/yyyy"),
+    MMMM_dd("MMMM dd"),
+    hh_mm_a("hh:mm a"),
+    MMMM_YYYY("MMMM YYYY"),
+    YYYY_DD_MM_HH_MM_SS("yyyy-dd-MM HH:mm:ss"),
+    MMMM_dd_YYYY("MMMM dd, yyyy"),
+    MMM_DD_YYYY("MMM dd yyyy"),
+    MM_DD_YYYY_HH_MM_AA("MM/dd/yyyy hh:mm aa"),
+    DD_MM_YYYY_HH_MM_AA("dd/mm/yyyy hh:mm aa"),
+    DD_MMM_YYYY_HH_MM_AA_1("dd MMM yyyy, hh:mm aa"),
+    DD_MM_YYYY_SCHEDULE("dd-MM-yyyy"),
+    hh_mm_aa("hh:mm aa")
+}

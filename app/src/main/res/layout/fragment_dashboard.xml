@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
+
+    <data>
+        <variable
+            name="vm"
+            type="com.movodream.localguru.presentation.DashboardViewModel" />
+    </data>
+
+    <androidx.core.widget.NestedScrollView
+
+        app:layout_constraintTop_toBottomOf="@id/cv_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:clipToPadding="true"
+            android:layout_marginHorizontal="@dimen/_12sdp"
+            android:paddingBottom="@dimen/_10sdp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Top 4 summary cards using RecyclerView grid -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_summary"
+                android:layout_width="match_parent"
+                tools:itemCount="4"
+
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:spanCount="2"
+                tools:listitem="@layout/item_task_summary_card"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_16sdp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:nestedScrollingEnabled="false" />
+
+            <!-- Section title -->
+            <TextView
+                android:layout_marginHorizontal="@dimen/_8sdp"
+                android:id="@+id/tv_priority_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fontFamily="@font/dm_sans_bold"
+                android:textStyle="bold"
+                android:text="@string/local_guru_today_s_priority_tasks"
+                android:textSize="@dimen/_14ssp"
+                android:textColor="@color/black"
+                android:layout_marginTop="@dimen/_16sdp"
+                app:layout_constraintTop_toBottomOf="@id/rv_summary"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:layout_marginHorizontal="@dimen/_8sdp"
+                android:id="@+id/tv_view_all"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:fontFamily="@font/dm_sans_medium"
+                android:onClick="@{() -> vm.onClickViewAll()}"
+                android:gravity="end"
+                android:text="@string/local_guru_view_all"
+                android:textSize="@dimen/_12ssp"
+                android:textColor="@color/colorSkyBlue"
+                android:layout_marginTop="@dimen/_16sdp"
+                app:layout_constraintStart_toEndOf="@+id/tv_priority_title"
+                app:layout_constraintTop_toBottomOf="@id/rv_summary"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Task list -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_main_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_8sdp"
+                tools:itemCount="3"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_task"
+                app:layout_constraintTop_toBottomOf="@id/tv_priority_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </androidx.core.widget.NestedScrollView>
+
+</layout>
+

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <!-- Brand Colors -->
+    <color name="colorPrimary">#FF5C8D</color>       <!-- Local Guru pink/red -->
+    <color name="colorPrimaryDark">#E14A76</color>
+    <color name="colorAccent">#FF5C8D</color>
+
+    <!-- Backgrounds -->
+    <color name="color_app_background">#F8F9FF</color>    <!-- Light bluish white -->
+    <color name="colorCardBackground">#FFFFFF</color>
+
+    <!-- Text -->
+    <color name="colorTextPrimary">#1A1A1A</color>
+    <color name="colorTextLightBlack">#383737</color>
+    <color name="colorTextSecondary">#666666</color>
+    <color name="colorTextHint">#999999</color>
+    <color name="colorTextDisabled">#BBBBBB</color>
+
+    <!-- Dashboard Card Accents -->
+    <color name="colorPendingBg">#FFF8E7</color>     <!-- Soft orange background -->
+    <color name="colorPendingIcon">#F6C343</color>   <!-- Golden icon -->
+
+    <color name="colorCompletedBg">#E9F8F0</color>   <!-- Soft green background -->
+    <color name="colorCompletedIcon">#4CAF50</color> <!-- Green check -->
+
+    <color name="colorRevisionBg">#FFF0F0</color>    <!-- Soft red background -->
+    <color name="colorRevisionIcon">#FF6B6B</color>  <!-- Red icon -->
+
+    <color name="colorVerifiedBg">#EEF4FF</color>    <!-- Soft blue background -->
+    <color name="colorVerifiedIcon">#5B8DEF</color>  <!-- Blue badge -->
+    <color name="colorBottomSheetIcons">#53CAFB</color>  <!-- Blue badge -->
+
+    <!-- Task Priority Labels -->
+    <color name="colorHighPriorityBg">#FFE9EE</color>
+    <color name="colorHighPriorityText">#E14A76</color>
+
+    <color name="colorNotStartedBg">#FFF6E5</color>
+    <color name="colorNotStartedText">#E9A938</color>
+
+    <color name="colorRevisionNeededBg">#FFF1E0</color>
+    <color name="colorRevisionNeededText">#E57200</color>
+
+    <!-- Progress Bar -->
+    <color name="colorProgressTrack">#E0E0E0</color>
+    <color name="colorProgressFill">#5B8DEF</color>
+
+    <!-- Divider -->
+    <color name="colorDivider">#EAEAEA</color>
+
+
+    <color name="colorLightBlue">#EEF7FE</color>
+    <color name="colorLightBlue1">#5CB4F5</color>
+    <color name="colorSkyBlue">#2196F3</color>
+    <color name="colorLightRed">#FDEDEB</color>
+    <color name="colorRed">#E74C3C</color>
+    <color name="colorOrange">#F39C12</color>
+    <color name="colorPink">#E8256C</color>
+    <color name="colorGreen">#58CA08</color>
+    <color name="colorGrey">#C7C5C5</color>
+    <color name="colorLightBlack">#393939</color>
+    <color name="colorLightGreen">#DAF2D2</color>
+
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable
+            name="subtask"
+            type="com.movodream.localguru.model.TaskItem.SubTask" />
+    </data>
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ll_desc"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="@dimen/_2sdp"
+    android:layout_marginTop="8dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            app:src="@{subtask.iconRes}"
+            android:tint="#666" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text='@{subtask.text}'
+            app:fontFamily="@font/dm_sans_regular"
+            android:textSize="@dimen/_10ssp"
+            android:layout_marginStart="@dimen/_4sdp"
+            android:textColor="#444" />
+
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>
+</layout>

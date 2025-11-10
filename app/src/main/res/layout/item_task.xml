@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <import type="android.view.View" />
+        <variable
+            name="task"
+            type="com.movodream.localguru.model.TaskItem" />
+    </data>
+
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="@dimen/_16sdp"
+        app:cardElevation="@dimen/_2sdp"
+        android:layout_marginVertical="@dimen/_8sdp"
+        android:layout_marginHorizontal="@dimen/_8sdp"
+        >
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <View
+                android:id="@+id/priority_bar"
+                android:layout_width="@dimen/_4sdp"
+                android:layout_height="0dp"
+                app:taskBackgroundColor="@{task.taskPriority}"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/priority_bar"
+                android:id="@+id/cl_root"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/_16sdp">
+
+                <!-- Left Priority Strip -->
+
+
+                <!-- Title -->
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@{task.poiName}"
+                    android:textSize="@dimen/_14ssp"
+                    android:textStyle="bold"
+                    app:fontFamily="@font/dm_sans_bold"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/tv_status"
+                    android:layout_marginStart="12dp"
+                    app:layout_constraintHorizontal_bias="0" />
+
+                <!-- Status Tag -->
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{task.taskPriority}"
+                    android:textSize="@dimen/_10ssp"
+                    app:fontFamily="@font/dm_sans_regular"
+                    app:priorityTextColor="@{task.taskPriority}"
+                    app:taskPriorityTextBackground="@{task.taskPriority}"
+                    android:paddingHorizontal="@dimen/_12sdp"
+                    android:paddingVertical="@dimen/_6sdp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+
+
+                    />
+
+                <!-- Category Chip -->
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_category"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{task.category}"
+                    android:textColor="@color/colorVerifiedIcon"
+                    android:textSize="@dimen/_10ssp"
+                    app:fontFamily="@font/dm_sans_regular"
+                    android:paddingHorizontal="@dimen/_12sdp"
+                    android:paddingVertical="@dimen/_6sdp"
+                    android:background="@drawable/bg_chip"
+                    app:layout_constraintStart_toStartOf="@id/tv_title"
+                    app:layout_constraintTop_toBottomOf="@id/tv_title"
+                    android:layout_marginTop="@dimen/_8sdp" />
+
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_sub_tasks"
+                    android:layout_width="0dp"
+                    tools:itemCount="4"
+                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                    app:spanCount="2"
+                    tools:listitem="@layout/item_sub_task"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/_4sdp"
+                    app:layout_constraintTop_toBottomOf="@id/tv_category"
+                    app:layout_constraintStart_toStartOf="@id/tv_category"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- Progress Bar (Visible only if progress > 0) -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                    android:progressDrawable="@drawable/custom_progress_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/_4sdp"
+                    android:progress="@{task.progress}"
+                    android:progressTint="@android:color/holo_blue_light"
+                    android:visibility='@{task.revisionRequired ? View.GONE : View.VISIBLE}'
+                    app:layout_constraintTop_toBottomOf="@id/rv_sub_tasks"
+                    app:layout_constraintStart_toStartOf="@id/rv_sub_tasks"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="@dimen/_10sdp" />
+
+                <!-- Progress Text -->
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_progress_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/local_guru_progress"
+                    android:textSize="12sp"
+                    android:textColor="#555"
+                    app:fontFamily="@font/dm_sans_regular"
+                    android:visibility='@{task.revisionRequired ? View.GONE : View.VISIBLE}'
+                    app:layout_constraintTop_toBottomOf="@id/progressBar"
+                    app:layout_constraintStart_toStartOf="@id/progressBar"
+                    android:layout_marginTop="4dp" />
+
+                <!-- Progress Text -->
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text='@{String.valueOf(task.progress) + "%"}'
+                    android:textSize="12sp"
+                    app:fontFamily="@font/dm_sans_regular"
+                    android:textColor="#555"
+                    android:visibility='@{task.revisionRequired ? View.GONE : View.VISIBLE}'
+                    app:layout_constraintTop_toBottomOf="@id/progressBar"
+                    app:layout_constraintEnd_toEndOf="@id/progressBar"
+                    android:layout_marginTop="4dp" />
+
+                <!-- Revision Box -->
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/ll_revision"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_revision_box"
+                    android:padding="12dp"
+
+                    android:visibility='@{task.revisionRequired ? View.VISIBLE : View.GONE}'
+                    app:layout_constraintTop_toBottomOf="@id/tv_progress"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="8dp">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠ Revision Required"
+                        android:textColor="@color/colorRed"
+                        android:textStyle="bold"
+                        app:fontFamily="@font/dm_sans_medium"
+                        android:textSize="@dimen/_12ssp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_revision_msg"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text='@{task.revisionMessage}'
+                        android:textColor="#333"
+                        app:fontFamily="@font/dm_sans_regular"
+                        android:textSize="@dimen/_10ssp"
+                        android:layout_marginTop="@dimen/_4sdp" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+                <!-- Action Buttons -->
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/ll_buttons"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toBottomOf="@id/ll_revision"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="@dimen/_12sdp">
+
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cv_btn_primary"
+                        android:layout_width="0dp"
+                        app:strokeWidth="0dp"
+                        android:layout_marginHorizontal="@dimen/_2sdp"
+                        app:cardCornerRadius="@dimen/_6sdp"
+                        app:setCardAction1Background="@{task.taskPriority}"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <androidx.appcompat.widget.LinearLayoutCompat
+                            android:orientation="horizontal"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:padding="@dimen/_8sdp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_gravity="center"
+                                app:statusTint="@{task.taskPriority}"
+                                app:srcActionButton1="@{task.taskPriority}"
+                                android:layout_width="@dimen/_16ssp"
+                                android:layout_height="@dimen/_16sdp"/>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/_4sdp"
+                                app:actionButton1Text="@{task.taskPriority}"
+                                app:statusTextColor="@{task.taskPriority}"
+                                android:fontFamily="@font/dm_sans_bold"
+
+                                android:textSize="@dimen/_12ssp" />
+
+
+                        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+                    </com.google.android.material.card.MaterialCardView>
+
+
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="match_parent" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cv_btn_secondary"
+                        android:layout_width="0dp"
+                        app:strokeWidth="0dp"
+                        android:layout_marginHorizontal="@dimen/_2sdp"
+                        app:cardCornerRadius="@dimen/_6sdp"
+                        app:cardBackgroundColor="@color/colorLightBlue"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <androidx.appcompat.widget.LinearLayoutCompat
+                            android:orientation="horizontal"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:padding="@dimen/_8sdp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_gravity="center"
+                                android:tint="@color/colorLightBlue1"
+                                app:srcActionButton2="@{task.taskPriority}"
+                                android:layout_width="@dimen/_16ssp"
+                                android:layout_height="@dimen/_16sdp"/>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                               android:layout_gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/_4sdp"
+                                actionButton2Text="@{task.taskPriority}"
+                                android:textColor="@color/colorLightBlue1"
+                                android:fontFamily="@font/dm_sans_bold"
+                                android:textSize="@dimen/_12ssp" />
+
+
+                        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+                    </com.google.android.material.card.MaterialCardView>
+
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </com.google.android.material.card.MaterialCardView>
+</layout>
