@@ -62,4 +62,12 @@
     <color name="colorLightBlack">#393939</color>
     <color name="colorLightGreen">#DAF2D2</color>
 
+
+  <!--  Change Later-->
+    <color name="bgSoft">#F6F8FC</color>
+    <color name="textPrimary">#222222</color>
+    <color name="textSecondary">#6F7D8E</color>
+    <color name="textHint">#9AA7B5</color>
+    <color name="primarySoft">#76A7FF</color>
+    <color name="chipText">#2A62C8</color>
 </resources>

@@ -66,14 +66,14 @@ class DashboardActivity : BaseActivity() {
             com.movodream.localguru.R.drawable.ic_circle,
             "Reports"
         ) {
-
+            onSelectedTab(2)
 
         }
         binding.bottomNav.addItem(
             android.R.drawable.ic_menu_add,
             "Profile"
         ) {
-
+            onSelectedTab(3)
         }
 
         binding.bottomNav.selectItem(0)

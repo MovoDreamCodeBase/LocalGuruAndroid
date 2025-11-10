@@ -5,4 +5,5 @@
     <string name="local_guru_today_s_priority_tasks">Today\'s Priority Tasks</string>
     <string name="local_guru_progress">Progress</string>
     <string name="local_guru_view_all">View All</string>
+    <string name="local_agent_performance_report">Performance Reports</string>
 </resources>

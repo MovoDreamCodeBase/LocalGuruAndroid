@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Monthly Summary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="October 2023"
+                android:textSize="12sp"
+                android:textColor="@color/colorGreen"/>
+
+        </LinearLayout>
+
+        <!-- stats same as weekly -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="@dimen/_50sdp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="89" android:textSize="20sp" android:textStyle="bold"/>
+                <TextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="Tasks Completed" android:textSize="12sp" android:textColor="@color/colorGrey" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+
+                android:layout_height="@dimen/_50sdp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="76" android:textSize="20sp" android:textStyle="bold"/>
+                <TextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="Verified" android:textSize="12sp" android:textColor="@color/colorGrey" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/_50sdp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="94%" android:textSize="20sp" android:textStyle="bold"/>
+                <TextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="Accuracy Rate" android:textSize="12sp" android:textColor="@color/colorGrey" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+
+                android:layout_height="@dimen/_50sdp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="test"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_height="@dimen/_2sdp"
+                    android:layout_width="@dimen/_5sdp"
+                    android:text="Avg.Rating"
+                    android:textSize="12sp"
+                    android:textColor="@color/colorGrey" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDownloadMonthly"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Download Report"
+            app:cornerRadius="8dp"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

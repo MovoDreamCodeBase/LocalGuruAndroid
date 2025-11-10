@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_marginBottom="72dp"
+        android:fillViewport="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fontFamily="@font/dm_sans_bold"
+                android:textStyle="bold"
+                android:textSize="@dimen/_14ssp"
+                android:text="@string/local_agent_performance_report"
+                android:textColor="@color/black"
+                android:layout_marginTop="8dp" />
+
+            <!-- Weekly Card -->
+            <include layout="@layout/layout_report_card_weekly" />
+
+            <!-- Monthly Card -->
+            <include layout="@layout/layout_report_card_monthly" />
+
+            <!-- Quality Metrics Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="Quality Metrics"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Last 30 Days"
+                            android:textSize="12sp"
+                            android:textColor="@color/colorPrimaryDark"/>
+
+                    </LinearLayout>
+
+                    <!-- Data Accuracy -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Data Accuracy"
+                        android:layout_marginTop="12dp"
+                        android:textSize="13sp"/>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progDataAcc"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        app:indicatorSize="8dp"
+                        app:trackCornerRadius="6dp"
+                        android:layout_marginTop="6dp"
+                        app:indicatorColor="@color/cardview_shadow_end_color"
+                        android:progress="94" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Photo Quality"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="88%"/>
+
+                    </LinearLayout>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        app:indicatorSize="8dp"
+                        app:trackCornerRadius="6dp"
+                        android:layout_marginTop="6dp"
+                        app:indicatorColor="@color/colorSkyBlue"
+                        android:progress="88" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="On-time Completion"
+                        android:layout_marginTop="12dp"
+                        android:textSize="13sp"/>
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progOnTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        app:indicatorSize="8dp"
+                        app:trackCornerRadius="6dp"
+                        android:layout_marginTop="6dp"
+                        app:indicatorColor="@color/colorSkyBlue"
+                        android:progress="96" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnViewAnalytics"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="View Detailed Analytics"
+                        style="@style/Widget.MaterialComponents.Button"
+                        app:cornerRadius="8dp"
+                        app:iconPadding="8dp"
+                        android:insetLeft="8dp"
+                        android:insetRight="8dp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
