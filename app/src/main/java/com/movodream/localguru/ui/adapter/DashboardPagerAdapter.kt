@@ -16,7 +16,7 @@ class DashboardPagerAdapter(
         DashboardFragment(),
         TaskFragment(),
         ReportFragment(),
-       // ProfileFragment()
+        ProfileFragment()
     )
 
     override fun getItemCount() = fragments.size

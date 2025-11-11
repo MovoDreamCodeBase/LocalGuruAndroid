@@ -80,7 +80,7 @@ class CustomBottomNavView @JvmOverloads constructor(
             item.textView.isSelected = isSelected
 
             // ✅ Scale animation for selected item
-            val scale = if (isSelected) 1.2f else 1f
+            val scale = if (isSelected) 1.1f else 1f
             item.iconView.animate()
                 .scaleX(scale)
                 .scaleY(scale)
