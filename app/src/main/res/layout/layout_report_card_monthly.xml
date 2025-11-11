@@ -3,137 +3,256 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    android:padding="16dp">
+    android:padding="16dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="@dimen/_16sdp"
+    app:cardElevation="@dimen/_2sdp"
+    android:layout_marginVertical="@dimen/_8sdp"
+    android:layout_marginHorizontal="@dimen/_8sdp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="@dimen/_14ssp"
+                android:textStyle="bold"
+                android:layout_margin="20dp"
+                app:fontFamily="@font/dm_sans_bold"
                 android:text="Monthly Summary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
 
-            <TextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="October 2023"
+                app:fontFamily="@font/dm_sans_bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 android:textSize="12sp"
-                android:textColor="@color/colorGreen"/>
+                android:layout_margin="20dp"
+                android:textStyle="bold"
+                android:textColor="@color/colorGrey"/>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <!-- stats same as weekly -->
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="12dp">
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/_50sdp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_task_completed"
+            android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/cl_task_veified"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="89" android:textSize="20sp" android:textStyle="bold"/>
-                <TextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="Tasks Completed" android:textSize="12sp" android:textColor="@color/colorGrey" />
+                    android:id="@+id/tv_task_completed_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/_18ssp"
+                    android:textStyle="bold"
+                    app:fontFamily="@font/dm_sans_bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:text="89" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/appCompatTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                    android:text="Tasks Completed"
+            android:textColor="@color/colorTextLightBlack"
+            android:textSize="@dimen/_10ssp"
+            app:fontFamily="@font/dm_sans_regular"
+            app:layout_constraintEnd_toEndOf="@+id/tv_task_completed_value"
+            app:layout_constraintHorizontal_bias="0.508"
+            app:layout_constraintStart_toStartOf="@+id/tv_task_completed_value"
+            app:layout_constraintTop_toBottomOf="@+id/tv_task_completed_value"
+            />
 
-            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
 
-                android:layout_height="@dimen/_50sdp"
-                android:orientation="vertical">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_task_veified"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+                android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/cl_task_completed"
+            app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="76" android:textSize="20sp" android:textStyle="bold"/>
-                <TextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="Verified" android:textSize="12sp" android:textColor="@color/colorGrey" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_task_verfied_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                    android:text="76"
+            android:textStyle="bold"
+            android:textSize="@dimen/_18ssp"
+            app:fontFamily="@font/dm_sans_bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorTextLightBlack"
+                    android:text="Verified"
 
-            </LinearLayout>
+            android:textSize="@dimen/_10ssp"
 
-        </LinearLayout>
+            app:fontFamily="@font/dm_sans_regular"
+            app:layout_constraintEnd_toEndOf="@+id/tv_task_verfied_value"
+            app:layout_constraintHorizontal_bias="0.508"
+            app:layout_constraintStart_toStartOf="@+id/tv_task_verfied_value"
+            app:layout_constraintTop_toBottomOf="@+id/tv_task_verfied_value" />
 
-        <LinearLayout
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="12dp">
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_task_completedaccurate_rate_value"
+                android:layout_width="wrap_content"
                 android:layout_weight="1"
-                android:layout_height="@dimen/_50sdp"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/cl_avg_rating_value"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="94%" android:textSize="20sp" android:textStyle="bold"/>
-                <TextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="Accuracy Rate" android:textSize="12sp" android:textColor="@color/colorGrey" />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-
-                android:layout_height="@dimen/_50sdp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_accurate_rate_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                    android:text="94%"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:fontFamily="@font/dm_sans_bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:text="Accuracy Rate"
+                    android:textColor="@color/colorTextLightBlack"
+                    android:textSize="@dimen/_10ssp"
+                    app:fontFamily="@font/dm_sans_regular"
+                    app:layout_constraintEnd_toEndOf="@+id/tv_accurate_rate_value"
+                    app:layout_constraintHorizontal_bias="0.508"
+                    app:layout_constraintStart_toStartOf="@+id/tv_accurate_rate_value"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_accurate_rate_value" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_avg_rating_value"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/cl_task_completedaccurate_rate_value"
+                app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_avg_rating_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                     android:text="test"
-                    android:textSize="20sp"
-                    android:textStyle="bold"/>
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_height="@dimen/_2sdp"
-                    android:layout_width="@dimen/_5sdp"
-                    android:text="Avg.Rating"
-                    android:textSize="12sp"
-                    android:textColor="@color/colorGrey" />
+                android:textSize="@dimen/_18ssp"
+                android:textStyle="bold"
+                app:fontFamily="@font/dm_sans_bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            </LinearLayout>
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Avg.Rating"
+                android:textColor="@color/colorTextLightBlack"
+                android:textSize="@dimen/_10ssp"
+                app:fontFamily="@font/dm_sans_regular"
+                app:layout_constraintEnd_toEndOf="@+id/tv_avg_rating_value"
+                app:layout_constraintHorizontal_bias="0.508"
+                app:layout_constraintStart_toStartOf="@+id/tv_avg_rating_value"
+                app:layout_constraintTop_toBottomOf="@+id/tv_avg_rating_value" />
 
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDownloadMonthly"
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cv_btn_primary"
             android:layout_width="match_parent"
+            app:strokeWidth="0dp"
+            android:layout_marginHorizontal="@dimen/_2sdp"
+            app:cardCornerRadius="@dimen/_6sdp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Download Report"
-            app:cornerRadius="8dp"/>
+            android:layout_margin="@dimen/_15sdp" >
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:padding="@dimen/_8sdp"
+                android:background="@color/colorSkyBlue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_gravity="center"
+                    android:layout_width="@dimen/_16ssp"
+                    android:src="@drawable/baseline_download_24"
+                    android:layout_height="@dimen/_16sdp"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/_4sdp"
+                    android:text="Download Report"
+                    android:fontFamily="@font/dm_sans_bold"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/_12ssp" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+        </com.google.android.material.card.MaterialCardView>
+
 
     </LinearLayout>
 

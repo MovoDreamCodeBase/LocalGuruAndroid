@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:layout_marginBottom="72dp"
         android:fillViewport="true"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -28,10 +27,12 @@
                 android:layout_height="wrap_content"
                 app:fontFamily="@font/dm_sans_bold"
                 android:textStyle="bold"
-                android:textSize="@dimen/_14ssp"
+                android:textSize="@dimen/_15ssp"
                 android:text="@string/local_agent_performance_report"
                 android:textColor="@color/black"
-                android:layout_marginTop="8dp" />
+                android:layout_marginStart="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_25sdp"
+                android:layout_marginBottom="@dimen/_10sdp"/>
 
             <!-- Weekly Card -->
             <include layout="@layout/layout_report_card_weekly" />
@@ -44,8 +45,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                app:cardCornerRadius="@dimen/_16sdp"
+                app:cardElevation="@dimen/_2sdp"
+                android:layout_marginVertical="@dimen/_8sdp"
+                android:layout_marginHorizontal="@dimen/_8sdp"
+                app:cardBackgroundColor="@color/white"
                 android:padding="16dp">
 
                 <LinearLayout
@@ -53,35 +58,68 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Quality Metrics"
-                            android:textStyle="bold" />
+                            android:textSize="@dimen/_14ssp"
+                            android:textStyle="bold"
+                            android:layout_margin="20dp"
+                            app:fontFamily="@font/dm_sans_bold"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Last 30 Days"
+                            app:fontFamily="@font/dm_sans_bold"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
                             android:textSize="12sp"
-                            android:textColor="@color/colorPrimaryDark"/>
+                            android:layout_margin="20dp"
+                            android:textStyle="bold"
+                            android:textColor="@color/colorGrey"/>
 
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <!-- Data Accuracy -->
-                    <TextView
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Data Accuracy"
-                        android:layout_marginTop="12dp"
-                        android:textSize="13sp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="6dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/_20sdp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            android:text="Data Accuracy"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="94%"
+                            android:layout_marginEnd="@dimen/_20sdp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progDataAcc"
@@ -90,27 +128,41 @@
                         app:indicatorSize="8dp"
                         app:trackCornerRadius="6dp"
                         android:layout_marginTop="6dp"
-                        app:indicatorColor="@color/cardview_shadow_end_color"
+                        android:layout_marginEnd="@dimen/_20sdp"
+                        android:layout_marginStart="@dimen/_20sdp"
+                        app:indicatorColor="@color/colorGreen"
                         android:progress="94" />
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center"
                         android:layout_marginTop="6dp">
 
-                        <TextView
+                        <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Photo Quality"/>
+                            android:layout_marginStart="@dimen/_20sdp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            android:text="Photo Quality"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
 
-                        <TextView
+                        <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="88%"/>
+                            android:text="88%"
+                            android:layout_marginEnd="@dimen/_20sdp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
 
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progPhoto"
@@ -119,15 +171,41 @@
                         app:indicatorSize="8dp"
                         app:trackCornerRadius="6dp"
                         android:layout_marginTop="6dp"
+                        android:layout_marginEnd="@dimen/_20sdp"
+                        android:layout_marginStart="@dimen/_20sdp"
                         app:indicatorColor="@color/colorSkyBlue"
                         android:progress="88" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="On-time Completion"
-                        android:layout_marginTop="12dp"
-                        android:textSize="13sp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="6dp">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/_20sdp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            android:text="On-time Completion"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="96%"
+                            android:layout_marginEnd="@dimen/_20sdp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            android:textColor="@color/colorTextLightBlack"
+                            android:textSize="@dimen/_10ssp"
+                            app:fontFamily="@font/dm_sans_regular"/>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progOnTime"
@@ -136,20 +214,51 @@
                         app:indicatorSize="8dp"
                         app:trackCornerRadius="6dp"
                         android:layout_marginTop="6dp"
-                        app:indicatorColor="@color/colorSkyBlue"
+                        android:layout_marginEnd="@dimen/_20sdp"
+                        android:layout_marginStart="@dimen/_20sdp"
+
+                        app:indicatorColor="@color/colorGreen"
                         android:progress="96" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnViewAnalytics"
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cv_btn_primary"
                         android:layout_width="match_parent"
+                        app:strokeWidth="0dp"
+                        android:layout_marginHorizontal="@dimen/_2sdp"
+                        app:cardCornerRadius="@dimen/_6sdp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="View Detailed Analytics"
-                        style="@style/Widget.MaterialComponents.Button"
-                        app:cornerRadius="8dp"
-                        app:iconPadding="8dp"
-                        android:insetLeft="8dp"
-                        android:insetRight="8dp"/>
+                        android:layout_margin="@dimen/_15sdp" >
+
+                        <androidx.appcompat.widget.LinearLayoutCompat
+                            android:orientation="horizontal"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:padding="@dimen/_8sdp"
+                            android:background="@color/colorSkyBlue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_gravity="center"
+                                android:layout_width="@dimen/_16ssp"
+                                android:src="@drawable/outline_arrow_outward_24"
+                                android:layout_height="@dimen/_16sdp"/>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/_4sdp"
+                                android:text="View Detailed Analytics"
+                                android:fontFamily="@font/dm_sans_bold"
+                                android:textColor="@color/white"
+                                android:textSize="@dimen/_12ssp" />
+
+                        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+                    </com.google.android.material.card.MaterialCardView>
+
 
                 </LinearLayout>
 
