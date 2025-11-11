@@ -10,6 +10,12 @@
             type="com.movodream.localguru.presentation.DashboardViewModel" />
     </data>
 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:background="@color/color_app_background"
 
@@ -25,6 +31,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/view_pager"
             app:strokeWidth="0dp"
             app:cardBackgroundColor="@color/white"
             app:cardElevation="@dimen/_4sdp"
@@ -164,7 +171,7 @@
             android:id="@+id/cvBottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
+            app:layout_constraintTop_toBottomOf="@+id/view_pager"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -184,4 +191,7 @@
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </LinearLayout>
+
 </layout>
