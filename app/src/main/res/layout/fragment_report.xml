@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 app:fontFamily="@font/dm_sans_bold"
                 android:textStyle="bold"
-                android:textSize="@dimen/_15ssp"
+                android:textSize="@dimen/_13ssp"
                 android:text="@string/local_agent_performance_report"
                 android:textColor="@color/black"
                 android:layout_marginStart="@dimen/_10sdp"
@@ -67,7 +67,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Quality Metrics"
-                            android:textSize="@dimen/_14ssp"
+                            android:textSize="@dimen/_12ssp"
                             android:textStyle="bold"
                             android:layout_margin="20dp"
                             app:fontFamily="@font/dm_sans_bold"
@@ -138,7 +138,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center"
-                        android:layout_marginTop="6dp">
+                        android:layout_marginTop="10dp">
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
@@ -181,7 +181,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center"
-                        android:layout_marginTop="6dp">
+                        android:layout_marginTop="10dp">
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:layout_width="wrap_content"
