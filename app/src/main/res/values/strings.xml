@@ -6,4 +6,7 @@
     <string name="local_guru_progress">Progress</string>
     <string name="local_guru_view_all">View All</string>
     <string name="local_agent_performance_report">Performance Reports</string>
+    <string name="complete">Complete</string>
+    <string name="save_draft">Save Draft</string>
+    <string name="submit_data">Submit Data</string>
 </resources>

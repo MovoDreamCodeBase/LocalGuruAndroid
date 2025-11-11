@@ -1,0 +1,63 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Upload Box -->
+    <LinearLayout
+        android:id="@+id/upload_box"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+
+        android:background="@drawable/bg_upload_dashed"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="12dp">
+
+        <ImageView
+            android:layout_marginTop="@dimen/_8sdp"
+            android:layout_width="@dimen/_48sdp"
+            android:layout_height="@dimen/_48sdp"
+            android:src="@drawable/ic_cloud_upload"
+
+            android:contentDescription="Upload Icon" />
+
+        <TextView
+            android:id="@+id/upload_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Click to upload photos or drag\nand drop"
+            android:textColor="@color/colorDarkGrey"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="14sp"
+            android:paddingTop="8dp"
+            android:fontFamily="@font/dm_sans_regular" />
+
+        <TextView
+            android:id="@+id/min_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_6sdp"
+            android:text="Minimum 5 photos required"
+            android:textColor="@color/colorDarkGrey"
+            android:layout_marginBottom="@dimen/_12sdp"
+            android:textSize="12sp"
+            android:paddingTop="4dp"
+            android:fontFamily="@font/dm_sans_regular" />
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_4sdp"/>
+    <!-- Uploaded Photos List -->
+    <LinearLayout
+        android:id="@+id/photo_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="12dp" />
+</LinearLayout>

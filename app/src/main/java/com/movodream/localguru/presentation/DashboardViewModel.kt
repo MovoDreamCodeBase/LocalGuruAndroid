@@ -69,7 +69,7 @@ class DashboardViewModel : ViewModel() {
                 taskPriority = "High Priority",
                 taskStatus = "Pending",
 
-                progress = 90,
+                progress = 40,
                 subTasks = listOf(
                     TaskItem.SubTask(1, R.drawable.ic_location, "Golden Temple Area"),
                     TaskItem.SubTask(2, R.drawable.ic_circle, "Due Today 5 PM"),

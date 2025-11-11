@@ -1,5 +1,6 @@
 package com.movodream.localguru.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,15 +10,18 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.movodream.localguru.databinding.FragmentDashboardBinding
+import com.movodream.localguru.model.TaskItem
 import com.movodream.localguru.presentation.DashboardViewModel
+import com.movodream.localguru.ui.activities.DynamicFormActivity
+
 import com.movodream.localguru.ui.adapter.SummaryAdapter
 import com.movodream.localguru.ui.adapter.TaskAdapter
 
 
-class DashboardFragment : Fragment() {
+class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
     private lateinit var binding: FragmentDashboardBinding
     private val dashboardViewModel: DashboardViewModel by activityViewModels()
-    private val adapter = TaskAdapter()
+    private val adapter = TaskAdapter(this)
     private val adapterSummary = SummaryAdapter()
 
     override fun onCreateView(
@@ -54,6 +58,16 @@ class DashboardFragment : Fragment() {
         binding.rvMainList.layoutManager = GridLayoutManager(requireActivity(), 1)
         binding.rvMainList.adapter = adapter
 
+
+    }
+
+    override fun onActionButton1Clicked(option: TaskItem) {
+       val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
+        intent.putExtra("KEY_ID",option.poiId)
+        startActivity(intent)
+    }
+
+    override fun onActionButton2Clicked(option: TaskItem) {
 
     }
 

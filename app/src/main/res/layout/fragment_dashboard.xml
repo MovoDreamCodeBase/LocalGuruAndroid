@@ -10,6 +10,14 @@
             type="com.movodream.localguru.presentation.DashboardViewModel" />
     </data>
 
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:background="@color/white"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
     <androidx.core.widget.NestedScrollView
 
         app:layout_constraintTop_toBottomOf="@id/cv_header"
@@ -91,6 +99,8 @@
 
 
     </androidx.core.widget.NestedScrollView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </layout>
 
