@@ -68,7 +68,7 @@
                     android:id="@+id/tv_task_completed_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="89"
+                    android:text="24"
                     android:textSize="@dimen/_18ssp"
                     android:textStyle="bold"
                     app:fontFamily="@font/dm_sans_bold"
@@ -138,8 +138,7 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cl_task_completedaccurate_rate_value"
-                android:layout_width="wrap_content"
-                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -159,9 +158,10 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
                 <TextView
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="Accuracy Rate"
                     android:textColor="@color/colorTextLightBlack"
                     android:textSize="@dimen/_10ssp"
@@ -175,9 +175,9 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cl_avg_rating_value"
-                android:layout_width="wrap_content"
-                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -195,9 +195,10 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="Avg. Rating"
                     android:textColor="@color/colorTextLightBlack"
                     android:textSize="@dimen/_10ssp"

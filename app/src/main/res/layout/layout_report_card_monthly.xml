@@ -142,9 +142,9 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cl_task_completedaccurate_rate_value"
-                android:layout_width="wrap_content"
-                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/cl_avg_rating_value"
@@ -152,20 +152,21 @@
                 app:layout_constraintTop_toTopOf="parent">
 
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_accurate_rate_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                    android:text="94%"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:fontFamily="@font/dm_sans_bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_height="wrap_content"
+                    android:id="@+id/tv_accurate_rate_value"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="94%"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:fontFamily="@font/dm_sans_bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="Accuracy Rate"
                     android:textColor="@color/colorTextLightBlack"
                     android:textSize="@dimen/_10ssp"
@@ -179,38 +180,38 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cl_avg_rating_value"
-                android:layout_width="wrap_content"
-                android:layout_weight="1"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/cl_task_completedaccurate_rate_value"
                 app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_avg_rating_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                    android:text="test"
-                android:textSize="@dimen/_18ssp"
-                android:textStyle="bold"
-                app:fontFamily="@font/dm_sans_bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_avg_rating_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="4.9"
+                    android:textSize="@dimen/_18ssp"
+                    android:textStyle="bold"
+                    app:fontFamily="@font/dm_sans_bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="Avg.Rating"
-                android:textColor="@color/colorTextLightBlack"
-                android:textSize="@dimen/_10ssp"
-                app:fontFamily="@font/dm_sans_regular"
-                app:layout_constraintEnd_toEndOf="@+id/tv_avg_rating_value"
-                app:layout_constraintHorizontal_bias="0.508"
-                app:layout_constraintStart_toStartOf="@+id/tv_avg_rating_value"
-                app:layout_constraintTop_toBottomOf="@+id/tv_avg_rating_value" />
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Avg.Rating"
+                    android:textColor="@color/colorTextLightBlack"
+                    android:textSize="@dimen/_10ssp"
+                    app:fontFamily="@font/dm_sans_regular"
+                    app:layout_constraintEnd_toEndOf="@+id/tv_avg_rating_value"
+                    app:layout_constraintHorizontal_bias="0.508"
+                    app:layout_constraintStart_toStartOf="@+id/tv_avg_rating_value"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_avg_rating_value" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>>
