@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "996486041848",
+    "project_id": "local-guru-app-project-id",
+    "storage_bucket": "local-guru-app-project-id.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996486041848:android:ce744cf515fcce18e3ab0d",
+        "android_client_info": {
+          "package_name": "com.movodream.localguru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlbjC_mp2GMHTotKj6RAYztEoG8exVwaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
