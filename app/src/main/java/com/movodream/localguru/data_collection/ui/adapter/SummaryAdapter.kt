@@ -1,21 +1,14 @@
-package com.movodream.localguru.ui.adapter
+package com.movodream.localguru.data_collection.ui.adapter
 
 
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.AutoTransition
-import androidx.transition.TransitionManager
-import com.movodream.localguru.R
-import com.movodream.localguru.databinding.ItemSubTaskBinding
-import com.movodream.localguru.databinding.ItemTaskBinding
+import com.movodream.localguru.data_collection.model.SummaryItem
 import com.movodream.localguru.databinding.ItemTaskSummaryCardBinding
-import com.movodream.localguru.model.SummaryItem
-import com.movodream.localguru.model.TaskItem
 
 
 class SummaryAdapter :

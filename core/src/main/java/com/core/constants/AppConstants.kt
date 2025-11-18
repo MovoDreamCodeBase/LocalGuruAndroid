@@ -11,6 +11,8 @@ object AppConstants {
     const val TAB_IN_PROGRESS = "In Progress"
     const val TAB_COMPLETED = "Completed"
     const val TAB_REVISION = "Revision"
+    const val FIREBASE_LOCAL_GURU_DB = "FirebaseLocalGuruDB"
+    const val AGENT_LOGIN_CREDENTIALS = "AgentLoginCredentialsTable"
 
 
 }

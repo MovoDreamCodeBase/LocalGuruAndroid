@@ -11,8 +11,8 @@
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:visibility="gone"
-        android:tint="@color/primarySoft"
-        android:src="@drawable/ic_home"  />
+        app:tint="@color/primarySoft"
+        app:srcCompat="@drawable/ic_home"  />
 
     <TextView
         android:id="@+id/tvTitle"
@@ -31,8 +31,7 @@
         android:id="@+id/ivArrow"
         android:layout_width="18dp"
         android:layout_height="18dp"
-        android:src="@drawable/ic_chevron_right"
-        android:tint="@color/textHint"
+        app:tint="@color/textHint"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

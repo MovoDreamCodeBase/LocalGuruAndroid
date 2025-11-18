@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:background="@color/white"
+        android:orientation="vertical"
+
+        android:visibility="visible">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbarDeposit"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_50sdp"
+            android:layout_marginHorizontal="@dimen/_6sdp"
+            android:background="@android:color/transparent"
+            android:elevation="@dimen/_4sdp"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="@dimen/_12sdp">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/ivBack"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    app:srcCompat="@drawable/ic_launcher_background" />
+
+            </RelativeLayout>
+
+        </androidx.appcompat.widget.Toolbar>
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txtPartner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/_16sdp"
+                    android:layout_marginTop="@dimen/_16sdp"
+                    android:fontFamily="@font/dm_sans_bold"
+                    android:gravity="center"
+                    android:text="@string/welcome_to"
+                    android:textColor="@color/colorSkyBlue"
+                    android:textSize="@dimen/_18sdp"
+                    />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/_16sdp"
+                        android:fontFamily="@font/dm_sans_bold"
+                        android:gravity="center"
+                        android:text="Local Guru Data Collection"
+                        android:textColor="@color/colorSkyBlue"
+                        android:textSize="@dimen/_18sdp"
+                        />
+
+
+
+                </LinearLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/_16sdp"
+                    android:layout_marginTop="@dimen/_16sdp"
+                    android:fontFamily="@font/dm_sans_medium"
+                    android:gravity="center"
+                    android:text="@string/sign_in_to_your_account"
+                    android:textColor="@color/colorDarkGrey"
+                    android:textSize="@dimen/_13sdp" />
+
+                <com.google.android.material.card.MaterialCardView
+                    app:cardCornerRadius="@dimen/_16sdp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#F9F9FA"
+                    android:layout_marginTop="@dimen/_24sdp"
+                    android:layout_marginHorizontal="@dimen/_20sdp"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_42sdp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/iv"
+                            android:layout_marginHorizontal="@dimen/_10sdp"
+                            android:layout_centerVertical="true"
+
+                            android:layout_width="@dimen/_24sdp"
+                            android:layout_height="@dimen/_24sdp"/>
+
+                        <androidx.appcompat.widget.AppCompatEditText
+                            android:background="@null"
+                            android:id="@+id/edtMobileNumber"
+                            android:maxLength="10"
+                            android:cursorVisible="true"
+                            android:imeOptions="actionNext"
+                            android:inputType="number"
+                            android:hint="@string/phone_number"
+                            android:maxLines="1"
+                            android:textColorHint="@color/colorGrey"
+                            android:fontFamily="@font/dm_sans_medium"
+                            android:textSize="@dimen/_14ssp"
+                            android:textColor="@color/black"
+                            android:layout_marginEnd="@dimen/_10sdp"
+                            android:layout_toEndOf="@+id/iv"
+                            android:layout_centerVertical="true"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </RelativeLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    app:cardCornerRadius="@dimen/_16sdp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#F9F9FA"
+                    android:layout_marginTop="@dimen/_24sdp"
+                    android:layout_marginHorizontal="@dimen/_20sdp"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_42sdp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/iv1"
+                            android:layout_marginHorizontal="@dimen/_10sdp"
+                            android:layout_centerVertical="true"
+                            android:layout_width="@dimen/_24sdp"
+                            android:layout_height="@dimen/_24sdp"/>
+
+                        <androidx.appcompat.widget.AppCompatEditText
+                            android:background="@null"
+                            android:id="@+id/edtPassword"
+                            android:maxLength="20"
+                            android:cursorVisible="true"
+                            android:imeOptions="actionDone"
+                            android:hint="@string/password"
+                            android:maxLines="1"
+                            android:inputType="textPassword"
+                            android:textColorHint="@color/colorGrey"
+                            android:fontFamily="@font/dm_sans_medium"
+                            android:textSize="@dimen/_14ssp"
+                            android:textColor="@color/black"
+                            android:layout_marginEnd="@dimen/_10sdp"
+                            android:layout_toEndOf="@+id/iv1"
+                            android:layout_centerVertical="true"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+
+
+
+                    </RelativeLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/_20sdp"
+                    android:layout_marginTop="@dimen/_40sdp"
+                    android:layout_marginBottom="@dimen/_15sdp"
+                    android:background="@drawable/bg_button_background"
+                    android:elevation="-1dp"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="0.5sp"
+                    android:minHeight="@dimen/_40sdp"
+                    android:paddingTop="@dimen/_9sdp"
+                    android:paddingBottom="@dimen/_9sdp"
+                    android:text="@string/login"
+                    android:fontFamily="@font/dm_sans_bold"
+                    android:textAllCaps="false"
+                    android:textSize="@dimen/_14sdp"
+                    android:textStyle="normal"
+                    android:textColor="@color/white"
+
+                    />
+
+
+
+
+
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+
+    </LinearLayout>
+
+</layout>

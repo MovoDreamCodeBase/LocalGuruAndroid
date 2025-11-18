@@ -9,4 +9,9 @@
     <string name="complete">Complete</string>
     <string name="save_draft">Save Draft</string>
     <string name="submit_data">Submit Data</string>
+    <string name="welcome_to">Welcome to</string>
+    <string name="sign_in_to_your_account">Sign in to your account</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="phone_number">Phone Number</string>
 </resources>

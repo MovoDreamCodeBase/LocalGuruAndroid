@@ -1,4 +1,4 @@
-package com.movodream.localguru.ui.fragments
+package com.movodream.localguru.data_collection.ui.fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,13 +9,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
+import com.movodream.localguru.data_collection.model.TaskItem
+import com.movodream.localguru.data_collection.presentation.DashboardViewModel
+import com.movodream.localguru.data_collection.ui.activities.DynamicFormActivity
+import com.movodream.localguru.data_collection.ui.adapter.SummaryAdapter
+import com.movodream.localguru.data_collection.ui.adapter.TaskAdapter
 import com.movodream.localguru.databinding.FragmentDashboardBinding
-import com.movodream.localguru.model.TaskItem
-import com.movodream.localguru.presentation.DashboardViewModel
-import com.movodream.localguru.ui.activities.DynamicFormActivity
 
-import com.movodream.localguru.ui.adapter.SummaryAdapter
-import com.movodream.localguru.ui.adapter.TaskAdapter
 
 
 class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {

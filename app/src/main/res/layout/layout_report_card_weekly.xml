@@ -233,7 +233,7 @@
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_gravity="center"
                     android:layout_width="@dimen/_16ssp"
-                    android:src="@drawable/baseline_download_24"
+                    app:srcCompat="@drawable/baseline_download_24"
                     android:layout_height="@dimen/_16sdp"/>
 
                 <androidx.appcompat.widget.AppCompatTextView

@@ -1,29 +1,26 @@
-package com.movodream.localguru.ui.activities
+package com.movodream.localguru.data_collection.ui.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.core.base.BaseActivity
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.movodream.localguru.R
-import com.movodream.localguru.model.MockNetwork
-import com.movodream.localguru.presentation.FormViewModel
-import com.movodream.localguru.ui.adapter.DynamicFormAdapter
-import com.movodream.localguru.ui.adapter.TabAdapter
+import com.movodream.localguru.data_collection.model.MockNetwork
+import com.movodream.localguru.data_collection.presentation.FormViewModel
+import com.movodream.localguru.data_collection.ui.adapter.DynamicFormAdapter
+import com.movodream.localguru.data_collection.ui.adapter.TabAdapter
+import kotlin.collections.indexOfFirst
+
 
 class DynamicFormActivity : BaseActivity() {
 
@@ -139,9 +136,6 @@ class DynamicFormActivity : BaseActivity() {
                 val payload = vm.buildPayload()
                 vm.submit(payload)
 
-                Toast.makeText(this, "Data Saved Successfully...", Toast.LENGTH_SHORT)
-                    .show()
-                finish()
             }
         }
 

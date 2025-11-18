@@ -1,4 +1,4 @@
-package com.movodream.localguru.ui.activities
+package com.movodream.localguru.data_collection.ui.activities
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -7,11 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.core.R
 import com.core.base.BaseActivity
+import com.movodream.localguru.data_collection.presentation.DashboardViewModel
+import com.movodream.localguru.data_collection.ui.adapter.DashboardPagerAdapter
 import com.movodream.localguru.databinding.ActivityDashboardBinding
-import com.movodream.localguru.presentation.DashboardViewModel
-import com.movodream.localguru.ui.adapter.DashboardPagerAdapter
-import com.movodream.localguru.ui.adapter.SummaryAdapter
-import com.movodream.localguru.ui.adapter.TaskAdapter
+
 
 class DashboardActivity : BaseActivity() {
     private lateinit var binding: ActivityDashboardBinding

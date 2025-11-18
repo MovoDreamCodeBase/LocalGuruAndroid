@@ -241,7 +241,7 @@
                             <androidx.appcompat.widget.AppCompatImageView
                                 android:layout_gravity="center"
                                 android:layout_width="@dimen/_16ssp"
-                                android:src="@drawable/outline_arrow_outward_24"
+                                app:srcCompat="@drawable/outline_arrow_outward_24"
                                 android:layout_height="@dimen/_16sdp"/>
 
                             <androidx.appcompat.widget.AppCompatTextView

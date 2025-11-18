@@ -1,4 +1,4 @@
-package com.movodream.localguru.model
+package com.movodream.localguru.data_collection.model
 
 
 
@@ -21,13 +21,8 @@ object Parser {
             tabs.add(parseTab(tObj))
         }
         val sb = json.optJSONObject("submit_button") ?: JSONObject()
-        val submit = SubmitInfo(
-            label = sb.optString("label", "Submit"),
-            draftLabel = sb.optString("draft_label", "Save Draft"),
-            endpoint = sb.optString("endpoint", ""),
-            method = sb.optString("method", "POST")
-        )
-        return FormSchema(formId, title, progress, tags, tabs, submit)
+
+        return FormSchema(formId, title, progress, tags, tabs)
     }
 
     private fun parseTab(obj: JSONObject): TabSchema {

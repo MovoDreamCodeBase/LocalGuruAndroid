@@ -1,4 +1,4 @@
-package com.movodream.localguru.ui.adapter
+package com.movodream.localguru.data_collection.ui.adapter
 
 
 
@@ -10,7 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.movodream.localguru.R
 
 import com.google.android.material.card.MaterialCardView
-import com.movodream.localguru.model.TabSchema
+import com.movodream.localguru.data_collection.model.TabSchema
+
 
 class TabAdapter(private val onTabSelected: (TabSchema) -> Unit) : RecyclerView.Adapter<TabAdapter.TabVH>() {
 

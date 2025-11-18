@@ -1,4 +1,4 @@
-package com.movodream.localguru.model
+package com.movodream.localguru.data_collection.model
 
 
 

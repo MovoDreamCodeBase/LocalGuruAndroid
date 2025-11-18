@@ -1,13 +1,13 @@
-package com.movodream.localguru.ui.adapter
+package com.movodream.localguru.data_collection.ui.adapter
 
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.databinding.ItemSubTaskBinding
 
 
-import com.movodream.localguru.model.TaskItem
 
 
 class SubTaskAdapter(private val items: List<TaskItem.SubTask>) :

@@ -4,7 +4,7 @@
     <data>
         <variable
             name="subtask"
-            type="com.movodream.localguru.model.TaskItem.SubTask" />
+            type="com.movodream.localguru.data_collection.model.TaskItem.SubTask" />
     </data>
 <androidx.appcompat.widget.LinearLayoutCompat
     xmlns:app="http://schemas.android.com/apk/res-auto"

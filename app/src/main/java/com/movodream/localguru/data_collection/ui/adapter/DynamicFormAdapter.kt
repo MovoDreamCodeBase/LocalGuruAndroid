@@ -1,8 +1,7 @@
-package com.movodream.localguru.ui.adapter
+package com.movodream.localguru.data_collection.ui.adapter
 
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.text.InputType
@@ -16,14 +15,11 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.core.utils.SimpleTextWatcher
 import com.movodream.localguru.R
+import com.movodream.localguru.data_collection.model.FieldSchema
 
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
-import com.movodream.localguru.model.FieldSchema
 
 class DynamicFormAdapter(
     private val onTakePhoto: (fieldId: String) -> Unit,

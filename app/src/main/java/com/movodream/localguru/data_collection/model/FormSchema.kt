@@ -1,4 +1,4 @@
-package com.movodream.localguru.model
+package com.movodream.localguru.data_collection.model
 
 
 
@@ -8,7 +8,7 @@ data class FormSchema(
     val progress: Int?,
     val tags: List<String>,
     val tabs: List<TabSchema>,
-    val submitEndpoint: SubmitInfo
+
 )
 
 data class SubmitInfo(

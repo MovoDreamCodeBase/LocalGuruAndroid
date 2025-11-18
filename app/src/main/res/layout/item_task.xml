@@ -7,7 +7,7 @@
         <import type="android.view.View" />
         <variable
             name="task"
-            type="com.movodream.localguru.model.TaskItem" />
+            type="com.movodream.localguru.data_collection.model.TaskItem" />
     </data>
 
 

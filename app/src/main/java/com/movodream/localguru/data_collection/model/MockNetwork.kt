@@ -1,9 +1,8 @@
-package com.movodream.localguru.model
+package com.movodream.localguru.data_collection.model
 
 
 object MockNetwork {
-    // RETURN schema as STRING like you'd get from API. Replace with real network call.
-    fun fetchSchemaString(): String {
+      fun fetchSchemaString(): String {
         return """
         {
           "form_id": "site_documentation_v1",
@@ -33,8 +32,7 @@ object MockNetwork {
                 {"id":"data_confidence","type":"select","label":"Data Quality Confidence","required":true,"options":[{"value":"high","label":"High - Verified"},{"value":"medium","label":"Medium - Some Uncertainty"},{"value":"low","label":"Low - Unverified"}],"default":"medium"},
                 {"id":"verification_checklist","type":"checkbox_group","label":"Verification Checklist","options":[{"value":"gps_verified","label":"GPS coordinates verified"},{"value":"contact_confirmed","label":"Contact information confirmed"},{"value":"hours_crosschecked","label":"Operating hours cross-checked"},{"value":"photos_clear","label":"Photos are clear and representative"}]}
             ] }
-          ],
-          "submit_button": {"label":"Submit Data","draft_label":"Save Draft","endpoint":"/api/v1/site_documentation/submit","method":"POST"}
+          ]
         }
         """.trimIndent()
     }
@@ -225,13 +223,7 @@ object MockNetwork {
             }
           ]
         }
-      ],
-      "submit_button": {
-        "label": "Submit Data",
-        "draft_label": "Save Draft",
-        "endpoint": "/api/v1/restaurant_data/submit",
-        "method": "POST"
-      }
+      ]
     }
     """.trimIndent()
     }

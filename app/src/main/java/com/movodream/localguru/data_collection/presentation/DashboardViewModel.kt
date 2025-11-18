@@ -1,4 +1,4 @@
-package com.movodream.localguru.presentation
+package com.movodream.localguru.data_collection.presentation
 
 
 import androidx.lifecycle.LiveData
@@ -6,8 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.core.constants.AppConstants
 import com.movodream.localguru.R
-import com.movodream.localguru.model.SummaryItem
-import com.movodream.localguru.model.TaskItem
+import com.movodream.localguru.data_collection.model.SummaryItem
+import com.movodream.localguru.data_collection.model.TaskItem
 
 
 class DashboardViewModel : ViewModel() {

@@ -1,6 +1,7 @@
 package com.core.utils
 
 import android.view.View
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
@@ -12,7 +13,10 @@ import com.google.android.material.card.MaterialCardView
 
 @BindingAdapter(/* ...value = */ "app:src")
 fun setImageResource(imageView: AppCompatImageView, resId: Int) {
-    imageView.setImageResource(resId)
+
+    AppCompatResources.getDrawable(imageView.context, resId)?.let {
+        imageView.setImageDrawable(it)
+    }
 }
 
 @BindingAdapter("app:backgroundRes")
@@ -42,7 +46,11 @@ fun setImage(imageView: AppCompatImageView, status: String?) {
         AppConstants.STATUS_COMPLETED -> R.drawable.ic_share
         else -> R.drawable.ic_warning
     }
-    imageView.setImageResource(backgroundRes)
+
+    AppCompatResources.getDrawable(imageView.context, backgroundRes)?.let {
+        imageView.setImageDrawable(it)
+    }
+
 }
 
 @BindingAdapter("setCardAction1Background")
@@ -82,7 +90,10 @@ fun setActionImage(imageView: AppCompatImageView, status: String?) {
         else -> R.drawable.ic_play
 
     }
-    imageView.setImageResource(backgroundRes)
+    AppCompatResources.getDrawable(imageView.context, backgroundRes)?.let {
+        imageView.setImageDrawable(it)
+    }
+    //imageView.setImageResource(backgroundRes)
 }
 
 @BindingAdapter("statusTextColor")

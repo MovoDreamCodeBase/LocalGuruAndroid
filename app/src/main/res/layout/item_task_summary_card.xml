@@ -6,7 +6,7 @@
     <data>
         <variable
             name="item"
-            type="com.movodream.localguru.model.SummaryItem" />
+            type="com.movodream.localguru.data_collection.model.SummaryItem" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

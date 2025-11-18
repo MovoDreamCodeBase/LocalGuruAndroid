@@ -1,4 +1,4 @@
-package com.movodream.localguru.presentation
+package com.movodream.localguru.data_collection.presentation
 
 
 
@@ -8,9 +8,10 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.movodream.localguru.model.FormSchema
-import com.movodream.localguru.model.Parser
-import com.movodream.localguru.ui.activities.DynamicFormActivity
+import com.movodream.localguru.data_collection.model.FormSchema
+import com.movodream.localguru.data_collection.model.Parser
+import com.movodream.localguru.data_collection.ui.activities.DynamicFormActivity
+
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,13 +54,6 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         valuesLive.postValue(m)
     }
 
-    fun addPhotoUri(fieldId: String, uri: Uri) {
-        val m = valuesLive.value ?: mutableMapOf()
-        val cur = (m[fieldId] as? MutableList<Uri>) ?: mutableListOf()
-        cur.add(uri)
-        m[fieldId] = cur
-        valuesLive.postValue(m)
-    }
 
     // Validate a specific tab; returns error map empty if ok
     fun validateTab(tabId: String): Map<String, String> {
@@ -142,7 +136,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
     }
 
-    // ✅ Add this for handling multiple gallery image selection
+    //  Add this for handling multiple gallery image selection
     fun addPhotoUris(fieldId: String, uris: List<Uri>) {
         val list = photoUris.getOrPut(fieldId) { mutableListOf() }
         list.addAll(uris)
@@ -150,7 +144,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         notifyFieldChanged(fieldId)
     }
 
-    // ✅ (Optional) Allow user to remove a photo from the list
+    //  (Optional) Allow user to remove a photo from the list
     fun removePhotoUri(fieldId: String, uri: Uri) {
         photoUris[fieldId]?.remove(uri)
         updateValue(fieldId, photoUris[fieldId]?.map { it.toString() })
