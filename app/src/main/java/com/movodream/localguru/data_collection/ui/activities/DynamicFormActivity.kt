@@ -13,8 +13,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.core.base.BaseActivity
+import com.core.customviews.CustomDialogBuilder
+import com.core.utils.PermissionUtils
 import com.google.android.material.card.MaterialCardView
 import com.movodream.localguru.R
+import com.movodream.localguru.data_collection.model.FormSchema
 import com.movodream.localguru.data_collection.model.MockNetwork
 import com.movodream.localguru.data_collection.presentation.FormViewModel
 import com.movodream.localguru.data_collection.ui.adapter.DynamicFormAdapter
@@ -37,7 +40,23 @@ class DynamicFormActivity : BaseActivity() {
 
     private var currentPhotoFieldId: String? = null
     private var lastShownTabId: String? = null
+    private var poiId = -1
 
+
+    private var pendingLatField = ""
+    private var pendingLngField = ""
+
+    private lateinit var permissionUtils: PermissionUtils
+
+    private val requiredPermissions: Array<String> by lazy {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+
+        permissions.toTypedArray()
+    }
     // Gallery picker
     private val pickImages =
         registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
@@ -54,7 +73,7 @@ class DynamicFormActivity : BaseActivity() {
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         )[FormViewModel::class.java]
-
+        permissionUtils = PermissionUtils(this)
         titleTv = findViewById(R.id.title)
         progressTv = findViewById(R.id.progress_text)
         categoryTV = findViewById(R.id.tv_category)
@@ -85,7 +104,9 @@ class DynamicFormActivity : BaseActivity() {
         adapter = DynamicFormAdapter(
             onTakePhoto = { /* Camera disabled */ },
             onPickImages = { fieldId -> requestGalleryAndPick(fieldId) },
-            onRequestLocation = { fieldId -> vm.fetchLocation(this, fieldId) },
+            onRequestLocation =  { latId, lngId ->
+                requestLocationPermission(latId, lngId)
+            },
             onFieldChanged = { id, value -> vm.updateValue(id, value) },
             onRemovePhoto = { fieldId, uri -> vm.removePhotoUri(fieldId, uri) }
         )
@@ -103,10 +124,13 @@ class DynamicFormActivity : BaseActivity() {
             }
         }
 
-        vm.fieldChangeLive.observe(this) { fieldId ->
-            if (lastShownTabId == null) return@observe
-            val pos = adapterPositionForField(fieldId)
-            if (pos >= 0) adapter.notifyItemChanged(pos)
+//        vm.fieldChangeLive.observe(this) { fieldId ->
+//            if (lastShownTabId == null) return@observe
+//            val pos = adapterPositionForField(fieldId)
+//            if (pos >= 0) adapter.notifyItemChanged(pos)
+//        }
+        vm.fieldChangeLive.observe(this) {
+            refreshCurrentTab()
         }
 
         // Save draft + move to next tab
@@ -122,7 +146,7 @@ class DynamicFormActivity : BaseActivity() {
             }
 
             vm.saveDraftForTab(currentTabId)
-
+            vm.saveDraftToRoom(""+poiId)
             val tabs = schema.tabs
             val idx = tabs.indexOfFirst { it.id == currentTabId }
             if (idx in 0 until tabs.lastIndex) {
@@ -130,11 +154,11 @@ class DynamicFormActivity : BaseActivity() {
                 lastShownTabId = nextTab.id
                 tabAdapter.highlightTab(nextTab.id)
                 showTab(nextTab.id)
-                Toast.makeText(this, "Draft saved. Moving to ${nextTab.title}", Toast.LENGTH_SHORT)
-                    .show()
+//                Toast.makeText(this, "Draft saved. Moving to ${nextTab.title}", Toast.LENGTH_SHORT)
+//                    .show()
             } else {
-                val payload = vm.buildPayload()
-                vm.submit(payload)
+               // val payload = vm.buildPayload()
+                vm.submit(""+poiId)
 
             }
         }
@@ -148,22 +172,38 @@ class DynamicFormActivity : BaseActivity() {
                 Toast.makeText(this, allErrors.values.first(), Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            val payload = vm.buildPayload()
-            vm.submit(payload)
+           // val payload = vm.buildPayload()
+            vm.submit(""+poiId)
             Toast.makeText(this, "Data Saved Successfully...", Toast.LENGTH_SHORT)
                 .show()
             finish()
         }
 
         // Load schema from backend mock
-        var s = "";
-        if(intent.getIntExtra("KEY_ID",1)==2){
-           s  = MockNetwork.fetchSchemaString2()
-        }else{
-           s   = MockNetwork.fetchSchemaString()
+//        var s = "";
+//        if(intent.getIntExtra("KEY_ID",1)==2){
+//           s  = MockNetwork.fetchSchemaString2()
+//        }else{
+//           s   = MockNetwork.fetchSchemaString()
+//        }
+        val schema : FormSchema? = intent.getParcelableExtra("KEY_SCHEMA") as FormSchema?
+        poiId = intent.getIntExtra("KEY_POI_ID",-1)
+        vm.loadSchemaFromString(schema)
+
+        // STEP 2 → Load draft (async) and restore values
+        vm.loadDraft(""+poiId) {
+
+            // STEP 3 → After draft loaded, now build UI
+            val loadedSchema = vm.schemaLive.value ?: return@loadDraft
+
+            titleTv.text = loadedSchema.title
+            tabAdapter.submitTabs(loadedSchema.tabs)
+
+            // Open first tab
+            loadedSchema.tabs.firstOrNull()?.let { showTab(it.id) }
         }
 
-        vm.loadSchemaFromString(s)
+
     }
 
     private fun showTab(tabId: String) {
@@ -220,6 +260,74 @@ class DynamicFormActivity : BaseActivity() {
     private fun adapterPositionForField(fieldId: String): Int {
         val fields = adapter.getCurrentFields()
         return fields.indexOfFirst { it.id == fieldId }
+    }
+    private fun requestLocationPermission(latId: String, lngId: String) {
+        pendingLatField = latId
+        pendingLngField = lngId
+
+        checkLocationPermissionAndStart()
+
+
+    }
+
+    private fun refreshCurrentTab() {
+        val schema = vm.schemaLive.value ?: return
+        val tabId = lastShownTabId ?: return
+        val tab = schema.tabs.firstOrNull { it.id == tabId } ?: return
+
+        adapter.submitFields(tab.fields, vm.valuesLive.value ?: emptyMap())
+    }
+
+    private fun checkLocationPermissionAndStart() {
+
+        if (permissionUtils.isLocationPermissionGranted(this)) {
+            checkGps()
+        } else {
+            permissionUtils.request(requiredPermissions) { granted ->
+                if (granted)   // Permission OK -> check GPS then start location fetch
+                    checkGpsThenStartLocationFetch()
+            }
+        }
+    }
+
+    private fun checkGpsThenStartLocationFetch() {
+        if (!permissionUtils.isGpsEnabled(this)) {
+            showEnableGpsDialog()
+        } else {
+            fetchLocation()
+                  }
+    }
+
+
+    private fun checkGps() {
+        if (!permissionUtils.isGpsEnabled(this)) {
+            showEnableGpsDialog()
+        } else {
+            fetchLocation()
+        }
+    }
+
+
+
+    private fun showEnableGpsDialog() {
+        permissionUtils.request(requiredPermissions) { granted ->
+            if (granted) {
+                // Now check if location is turned ON
+                permissionUtils.checkAndEnableLocationSettings { enabled ->
+                    if (enabled) {
+                        //  Start fetching location
+                      fetchLocation()
+                    } else {
+
+                    }
+                }
+            }
+        }
+    }
+
+    private fun fetchLocation(){
+        Toast.makeText(this@DynamicFormActivity,"Fetching your location, please wait…", Toast.LENGTH_LONG).show()
+        vm.fetchAccurateLocation(pendingLatField, pendingLngField)
     }
 
 }

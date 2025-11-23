@@ -1,7 +1,9 @@
 package com.movodream.localguru.data_collection.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
-
+@Parcelize
 data class FormSchema(
     val formId: String,
     val title: String,
@@ -9,22 +11,22 @@ data class FormSchema(
     val tags: List<String>,
     val tabs: List<TabSchema>,
 
-)
-
+): Parcelable
+@Parcelize
 data class SubmitInfo(
     val label: String,
     val draftLabel: String?,
     val endpoint: String,
     val method: String
-)
-
+): Parcelable
+@Parcelize
 data class TabSchema(
     val id: String,
     val title: String,
     val order: Int,
     val fields: List<FieldSchema>
-)
-
+): Parcelable
+@Parcelize
 data class FieldSchema(
     val id: String,
     val type: String,
@@ -38,12 +40,12 @@ data class FieldSchema(
     val max: Double? = null,
     val precision: Int? = null,
     val options: List<Option> = emptyList(),
-    val default: Any? = null,
     val minItems: Int? = null,
     val maxItems: Int? = null,
     val minSelected: Int? = null,
     val captureRequired: Boolean? = null,
-    val instructions: String? = null
-)
-
-data class Option(val value: String, val label: String)
+    val instructions: String? = null,
+    val regex: String? = null
+): Parcelable
+@Parcelize
+data class Option(val value: String, val label: String): Parcelable

@@ -1,13 +1,19 @@
 package com.movodream.localguru.data_collection.presentation
 
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.core.constants.AppConstants
 import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.SummaryItem
 import com.movodream.localguru.data_collection.model.TaskItem
+import com.movodream.localguru.data_collection.repository.CategoryResult
+import com.movodream.localguru.data_collection.repository.DashboardRepository
+import kotlinx.coroutines.launch
 
 
 class DashboardViewModel : ViewModel() {
@@ -66,6 +72,7 @@ class DashboardViewModel : ViewModel() {
                 poiId = 1,
                 poiName = "Golden Temple Documentation",
                 category = "Religious Site",
+                categoryId = "RELIGIOUS_SITES",
                 taskPriority = "High Priority",
                 taskStatus = "Pending",
 
@@ -82,6 +89,7 @@ class DashboardViewModel : ViewModel() {
                 poiId = 2,
                 poiName = "Kesar Da Dhaba Data Collection",
                 category = "Restaurant",
+                categoryId = "STAYS_HOTELS",
                 taskPriority = "Not Started",
                 taskStatus = "Pending",
                 progress = 0,
@@ -97,6 +105,7 @@ class DashboardViewModel : ViewModel() {
                 poiId = 3,
                 poiName = "Hall Bazaar Shopping Data",
                 category = "Market",
+                categoryId = "MARKETS",
                 taskPriority = "Revision Needed",
                 taskStatus = "Revision",
                 revisionRequired = true,
@@ -113,6 +122,7 @@ class DashboardViewModel : ViewModel() {
                 poiId = 4,
                 poiName = "Jallianwala Bagh Documentation",
                 category = "Historical Site",
+                categoryId = "HISTORICAL_SITES",
                 taskPriority = "Completed",
                 taskStatus = "Completed",
                 revisionRequired = false,
@@ -152,5 +162,40 @@ class DashboardViewModel : ViewModel() {
 
     fun onClickViewAll() {
         _selectedTab.value = 1
+    }
+
+
+    private val repository = DashboardRepository()
+
+    private val _categoryState = MutableLiveData<CategoryResult?>()
+    val categoryState: LiveData<CategoryResult?> get() = _categoryState
+    // caller tag (which fragment requested the action)
+    private val _categoryCaller = MutableLiveData<String?>()
+    val categoryCaller: LiveData<String?> = _categoryCaller
+
+    fun setCaller(tag: String) {
+        _categoryCaller.value = tag
+    }
+
+    fun clearCaller() {
+        _categoryCaller.value = null
+    }
+    fun loadCategory(categoryId: String) {
+        Log.d("ViewModel", "loadCategory() called for ${categoryId}")
+        if (categoryId.isBlank()) {
+            _categoryState.value = CategoryResult.Error("Invalid category id")
+            return
+        }
+
+        _categoryState.value = CategoryResult.Loading
+
+        viewModelScope.launch {
+            val result = repository.getCategoryDetails(categoryId)
+            _categoryState.postValue(result)
+            Log.d("ViewModel", "Posted Success 1")
+        }
+    }
+    fun resetCategoryState() {
+        _categoryState.value = null
     }
 }

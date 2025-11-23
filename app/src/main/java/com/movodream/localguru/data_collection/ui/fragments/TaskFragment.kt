@@ -2,53 +2,102 @@ package com.movodream.localguru.data_collection.ui.fragments
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.util.Log
+import android.view.*
+import android.widget.Toast
 import androidx.appcompat.widget.AppCompatButton
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.DashboardViewModel
+import com.movodream.localguru.data_collection.repository.CategoryResult
 import com.movodream.localguru.data_collection.ui.activities.DynamicFormActivity
 import com.movodream.localguru.data_collection.ui.adapter.TaskAdapter
-import com.movodream.localguru.databinding.FragmentDashboardBinding
 import com.movodream.localguru.databinding.FragmentTaskBinding
 
-import kotlin.getValue
-
-
 class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
+
+    private  var selectedPOI: Int =-1
     private lateinit var binding: FragmentTaskBinding
-    private val dashboardViewModel: DashboardViewModel by activityViewModels()
+    private val viewModel: DashboardViewModel by activityViewModels()
     private val adapter = TaskAdapter(this)
     private lateinit var tabButtons: List<AppCompatButton>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        viewLifecycleOwnerLiveData.observe(this) { owner ->
+            if (owner != null) observeCategoryState(owner)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentTaskBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
-        binding.vm = dashboardViewModel // CRITICAL: Assign the ViewModel to the layout
+        binding.vm = viewModel
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         setupTabs()
         setAdapters()
         setObserver()
     }
 
+    private fun observeCategoryState(owner: androidx.lifecycle.LifecycleOwner) {
+        viewModel.categoryState.observe(owner) { state ->
+
+            val caller = viewModel.categoryCaller.value
+            if (caller != "TASK") return@observe   // Ignore Dashboard events
+
+            when (state) {
+
+                CategoryResult.Loading -> {
+                    //binding.progressBar.visibility = View.VISIBLE
+                }
+
+                is CategoryResult.Success -> {
+                    //binding.progressBar.visibility = View.GONE
+
+                    Log.d("TaskFragment", "TASK SUCCESS fired once")
+
+                    val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
+                    intent.putExtra("KEY_SCHEMA", state.data)
+                    intent.putExtra("KEY_POI_ID", selectedPOI)
+                    startActivity(intent)
+
+                    viewModel.resetCategoryState()
+                    viewModel.clearCaller()
+                }
+
+                CategoryResult.NotFound -> {
+                   // binding.progressBar.visibility = View.GONE
+                    Toast.makeText(requireActivity(),"Category not found", Toast.LENGTH_SHORT).show()
+
+                    viewModel.resetCategoryState()
+                    viewModel.clearCaller()
+                }
+
+                is CategoryResult.Error -> {
+                 //   binding.progressBar.visibility = View.GONE
+                    Toast.makeText(requireActivity(), state.message, Toast.LENGTH_SHORT).show()
+
+                    viewModel.resetCategoryState()
+                    viewModel.clearCaller()
+                }
+                null -> { /* ignore reset state */ }
+            }
+        }
+    }
 
     private fun setupTabs() {
-        // all tab buttons
         tabButtons = listOf(
             binding.tabAll,
             binding.tabPending,
@@ -57,14 +106,13 @@ class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
             binding.tabRevision
         )
 
-        tabButtons.forEach { button ->
-            button.setOnClickListener {
-                selectTab(button)
-                dashboardViewModel.filterTasks(button.text.toString())
+        tabButtons.forEach { btn ->
+            btn.setOnClickListener {
+                selectTab(btn)
+                viewModel.filterTasks(btn.text.toString())
             }
         }
 
-        // default select "All"
         selectTab(binding.tabAll)
     }
 
@@ -73,34 +121,21 @@ class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
     }
 
     private fun setObserver() {
-        dashboardViewModel.filteredTasks.observe(viewLifecycleOwner, Observer { list ->
+        viewModel.filteredTasks.observe(viewLifecycleOwner, Observer { list ->
             adapter.submitList(list)
         })
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-    }
-
-
-
     private fun setAdapters() {
-
-       binding.rvMainList.layoutManager = GridLayoutManager(requireActivity(), 1)
+        binding.rvMainList.layoutManager = GridLayoutManager(requireActivity(), 1)
         binding.rvMainList.adapter = adapter
-
-
     }
 
     override fun onActionButton1Clicked(option: TaskItem) {
-        val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
-        intent.putExtra("KEY_ID",option.poiId)
-        startActivity(intent)
+        selectedPOI = option.poiId
+        viewModel.setCaller("TASK")
+        viewModel.loadCategory(option.categoryId)
     }
 
-    override fun onActionButton2Clicked(option: TaskItem) {
-
-    }
+    override fun onActionButton2Clicked(option: TaskItem) {}
 }
-

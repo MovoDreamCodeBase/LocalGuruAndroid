@@ -60,10 +60,10 @@ object Parser {
             max = f.optDoubleOrNull("max"),
             precision = f.optIntOrNull("precision"),
             options = opts,
-            default = if (f.has("default")) f.get("default") else null,
             minItems = f.optIntOrNull("minItems"),
             maxItems = f.optIntOrNull("maxItems"),
             minSelected = f.optIntOrNull("minSelected"),
+            regex = f.optString("regex", null),
             captureRequired = f.optBooleanOrNull("capture_required"),
             instructions = f.optString("instructions", null)
         )

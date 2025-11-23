@@ -33,11 +33,11 @@
                     />
 
                 <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="@dimen/_40sdp"
+                    android:layout_height="@dimen/_40sdp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    app:srcCompat="@drawable/ic_launcher_background" />
+                    app:srcCompat="@drawable/app_logo" />
 
             </RelativeLayout>
 
@@ -61,7 +61,7 @@
                     android:fontFamily="@font/dm_sans_bold"
                     android:gravity="center"
                     android:text="@string/welcome_to"
-                    android:textColor="@color/colorSkyBlue"
+                    android:textColor="@color/colorPink"
                     android:textSize="@dimen/_18sdp"
                     />
 
@@ -77,7 +77,7 @@
                         android:fontFamily="@font/dm_sans_bold"
                         android:gravity="center"
                         android:text="Local Guru Data Collection"
-                        android:textColor="@color/colorSkyBlue"
+                        android:textColor="@color/colorPink"
                         android:textSize="@dimen/_18sdp"
                         />
 
@@ -112,7 +112,7 @@
                             android:id="@+id/iv"
                             android:layout_marginHorizontal="@dimen/_10sdp"
                             android:layout_centerVertical="true"
-
+                            app:srcCompat="@drawable/ic_call"
                             android:layout_width="@dimen/_24sdp"
                             android:layout_height="@dimen/_24sdp"/>
 
@@ -153,6 +153,7 @@
                         android:layout_height="match_parent">
                         <androidx.appcompat.widget.AppCompatImageView
                             android:id="@+id/iv1"
+                            app:srcCompat="@drawable/ic_lock"
                             android:layout_marginHorizontal="@dimen/_10sdp"
                             android:layout_centerVertical="true"
                             android:layout_width="@dimen/_24sdp"
@@ -195,7 +196,7 @@
                     android:layout_marginHorizontal="@dimen/_20sdp"
                     android:layout_marginTop="@dimen/_40sdp"
                     android:layout_marginBottom="@dimen/_15sdp"
-                    android:background="@drawable/bg_button_background"
+                    android:background="@drawable/bg_button_pink"
                     android:elevation="-1dp"
                     android:letterSpacing="0.03"
                     android:lineSpacingExtra="0.5sp"

@@ -20,8 +20,8 @@ class LoginRepository {
     fun loginAgent(agentId: String, password: String): LiveData<LoginResult> {
         val result = MutableLiveData<LoginResult>()
 
-        val agentRef = rootRef.child("FirebaseLocalGuruDB")
-            .child("AgentLoginCredentialsTable")
+        val agentRef = rootRef.child(AppConstants.FIREBASE_LOCAL_GURU_DB)
+            .child(AppConstants.AGENT_LOGIN_CREDENTIALS)
             .child(agentId)
 
         agentRef.get()

@@ -13,6 +13,7 @@ object AppConstants {
     const val TAB_REVISION = "Revision"
     const val FIREBASE_LOCAL_GURU_DB = "FirebaseLocalGuruDB"
     const val AGENT_LOGIN_CREDENTIALS = "AgentLoginCredentialsTable"
+    const val DYNAMIC_DATA_SET = "LocalGuruDynamicFieldsData"
 
 
 }

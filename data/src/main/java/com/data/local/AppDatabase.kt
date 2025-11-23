@@ -4,19 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.data.local.dao.DraftDao
 import com.data.local.dao.UserDao
+import com.data.local.entity.DraftEntity
 import com.data.local.entity.UserEntity
 
-@Database(
-    entities = [UserEntity::class/*, ProfileEntity::class*/],
-    version = 1, // current DB version
-    exportSchema = true
-)
+@Database(entities = [DraftEntity::class], version = 1, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
-    abstract fun userDao(): UserDao
-    /*abstract fun profileDao(): ProfileDao*/
-
+    abstract fun draftDao(): DraftDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null

@@ -63,4 +63,5 @@ dependencies {
     // ViewPager2
     api(libs.androidx.viewpager2)
     api(libs.androidx.fragment.ktx)
+    api("com.google.android.gms:play-services-location:21.3.0")
 }

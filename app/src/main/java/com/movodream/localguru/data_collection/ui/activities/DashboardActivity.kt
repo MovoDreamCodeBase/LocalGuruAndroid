@@ -1,6 +1,7 @@
 package com.movodream.localguru.data_collection.ui.activities
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.core.R
 import com.core.base.BaseActivity
 import com.movodream.localguru.data_collection.presentation.DashboardViewModel
+import com.movodream.localguru.data_collection.repository.CategoryResult
 import com.movodream.localguru.data_collection.ui.adapter.DashboardPagerAdapter
 import com.movodream.localguru.databinding.ActivityDashboardBinding
 
@@ -88,6 +90,8 @@ class DashboardActivity : BaseActivity() {
             onSelectedTab(it)
             binding.bottomNav.selectItem(it)
         }
+
+
     }
 
 }

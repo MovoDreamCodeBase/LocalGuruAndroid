@@ -9,9 +9,7 @@ import com.movodream.localguru.data_collection.ui.fragments.ReportFragment
 import com.movodream.localguru.data_collection.ui.fragments.TaskFragment
 
 
-class DashboardPagerAdapter(
-    fa: FragmentActivity
-) : FragmentStateAdapter(fa) {
+class DashboardPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
 
     private val fragments = listOf(
         DashboardFragment(),
@@ -23,4 +21,13 @@ class DashboardPagerAdapter(
     override fun getItemCount() = fragments.size
 
     override fun createFragment(position: Int): Fragment = fragments[position]
+
+    // VERY IMPORTANT FIX:
+    override fun getItemId(position: Int): Long {
+        return fragments[position].hashCode().toLong()
+    }
+
+    override fun containsItem(itemId: Long): Boolean {
+        return fragments.any { it.hashCode().toLong() == itemId }
+    }
 }

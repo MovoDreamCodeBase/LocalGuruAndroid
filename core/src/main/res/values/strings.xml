@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_location_alert">This app needs access to your location to accurately detect your current position and provide precise navigation, nearby activity updates, and location-based features. </string>
+    <string name="permissions_needed">Permissions needed</string>
+    <string name="permission_continue">Continue</string>
+
+</resources>

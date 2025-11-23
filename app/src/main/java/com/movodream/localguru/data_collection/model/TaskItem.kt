@@ -7,6 +7,7 @@ data class TaskItem(
     val poiId: Int,
     val poiName: String,
     val category: String,
+    val categoryId: String,
     val taskPriority: String,
     val taskStatus: String,
     val progress: Int = 0,

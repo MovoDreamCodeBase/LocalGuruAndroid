@@ -24,7 +24,7 @@ import com.movodream.localguru.data_collection.model.FieldSchema
 class DynamicFormAdapter(
     private val onTakePhoto: (fieldId: String) -> Unit,
     private val onPickImages: (fieldId: String) -> Unit,
-    private val onRequestLocation: (fieldId: String) -> Unit,
+    private val onRequestLocation: (latFieldId: String, lngFieldId: String) -> Unit,
     private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
     private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit
 ) : RecyclerView.Adapter<DynamicFormAdapter.FieldVH>() {
@@ -63,7 +63,7 @@ class DynamicFormAdapter(
         itemView: View,
         private val onTakePhoto: (fieldId: String) -> Unit,
         private val onPickImages: (fieldId: String) -> Unit,
-        private val onRequestLocation: (fieldId: String) -> Unit,
+        private val onRequestLocation: (latFieldId: String, lngFieldId: String) -> Unit,
         private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
         private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
@@ -153,24 +153,64 @@ class DynamicFormAdapter(
                 }
 
                 "number" -> {
-                    val et = EditText(itemView.context).apply {
-                        background = context.getDrawable(R.drawable.bg_input_bordered)
+                    val ctx = itemView.context
+
+                    val container = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                    }
+
+                    // -------- Number Input Field --------
+                    val et = EditText(ctx).apply {
+                        background = ctx.getDrawable(R.drawable.bg_input_bordered)
                         setPadding(24, 36, 24, 36)
                         textSize = 15f
-                        //  hint = field.placeholder ?: field.label
                         setText(value?.toString() ?: "")
                         inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-                        typeface = ResourcesCompat.getFont(itemView.context, com.core.R.font.dm_sans_medium)
-                        setTextColor(context.getColor(android.R.color.black))
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+                        setTextColor(ctx.getColor(android.R.color.black))
                         setHintTextColor(Color.parseColor("#9E9E9E"))
                     }
 
                     et.addTextChangedListener(SimpleTextWatcher { s ->
                         onFieldChanged(field.id, s.toDoubleOrNull())
                     })
-                    activeWatcher = null
-                    host.addView(et)
+
+                    container.addView(et)
+
+                    // -------- Show ONE button only after longitude --------
+                    if (field.id == "longitude") {
+
+                        val btn = TextView(ctx).apply {
+                            text = "Fetch Location"
+                            textSize = 13f
+                            setPadding(24, 12, 24, 12)
+                            background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                            setTextColor(Color.WHITE)
+                            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+
+                            val params = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            )
+                            params.topMargin = 12.dpToPx(ctx)
+                            layoutParams = params
+                        }
+
+                        btn.setOnClickListener {
+                            onRequestLocation("latitude", "longitude")
+                        }
+
+                        container.addView(btn)
+                    }
+
+                    host.addView(container)
                 }
+
+
 
 
                 "select" -> {
@@ -353,8 +393,9 @@ class DynamicFormAdapter(
 
                     val subtitle = TextView(ctx).apply {
                         if (!field.instructions.isNullOrEmpty())
-                        { text= field.instructions  }
-                        //  text = "Minimum 5 photos required"
+                        { text= field.instructions  }else {
+                            text = "Minimum ${field.minItems} photos required"
+                        }
                         setTextColor(Color.parseColor("#9E9E9E"))
                         textSize = 12f
                         typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_regular)
