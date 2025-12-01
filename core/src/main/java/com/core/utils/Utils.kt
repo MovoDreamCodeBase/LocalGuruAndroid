@@ -1,13 +1,19 @@
 package com.core.utils
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.drawable.ColorDrawable
 import android.text.TextUtils
 import android.util.Patterns
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import androidx.core.content.ContextCompat
+import com.core.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import java.io.File
@@ -492,6 +498,53 @@ class Utils {
             } catch (ex: java.lang.Exception) {
             } // for now eat exceptions
             return ""
+        }
+
+        private var progressDialog: Dialog? = null
+
+        /**
+         * Show Progress Dialog
+         * @param mContext Context
+         */
+        fun showProgressDialog(mContext: Context) {
+            hideProgressDialog()
+            progressDialog = Dialog(mContext)
+            progressDialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            progressDialog?.window?.setFlags(
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+            )
+            progressDialog?.window?.setBackgroundDrawable(
+                ColorDrawable(
+                    ContextCompat.getColor(mContext, android.R.color.transparent)
+                )
+            )
+            val lp = progressDialog?.window?.attributes
+            lp?.dimAmount = 0.8f // Dim level. 0.0 - no dim, 1.0 - completely opaque
+            progressDialog?.window?.attributes = lp
+            progressDialog?.setCancelable(false)
+            val viewChild = View.inflate(mContext, R.layout.layout_progress_loader, null)
+            progressDialog?.setContentView(viewChild)
+            try {
+                progressDialog?.show()
+            } catch (e: Exception) {
+                DebugLog.print(e)
+            }
+        }
+
+        /**
+         * Hide Progress bar
+         */
+        fun hideProgressDialog() {
+            try {
+                progressDialog?.let {
+                    if (it.isShowing) {
+                        it.dismiss()
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLog.print(e)
+            }
         }
 
 

@@ -2,10 +2,20 @@ package com.movodream.localguru.data_collection.repository
 
 import com.data.local.dao.DraftDao
 import com.data.local.entity.DraftEntity
+import com.data.remote.model.AgentTaskResponse
+import com.network.client.ApiClient
+import com.network.client.BaseRepository
+import com.network.client.ResponseHandler
+import com.network.model.ResponseData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import org.json.JSONObject
 
-class DraftRepository(private val dao: DraftDao) {
-
+class DraftRepository(private val dao: DraftDao): BaseRepository() {
+    val apiInterface =   ApiClient.getApiInterface()
     fun observeDraft(poiId: String): Flow<DraftEntity?> =
         dao.observeDraft(poiId)
 
@@ -17,4 +27,32 @@ class DraftRepository(private val dao: DraftDao) {
 
     suspend fun deleteDraft(poiId: String) =
         dao.deleteDraft(poiId)
+
+    suspend fun submitPOIData(
+         body: Map<String, Any>,
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.Default) {
+            return@withContext makeAPICallTemp {
+                apiInterface.submitPOIDetails(
+                    body
+                )
+            }
+
+        }
+    }
+
+    suspend fun submitPOIData(
+        data: RequestBody,
+        files: List<MultipartBody.Part>
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.IO) {
+            makeAPICallTemp {
+                apiInterface.submitPOIDetails(data, files)
+            }
+        }
+    }
+
+
 }

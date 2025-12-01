@@ -13,6 +13,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/view_pager"
         app:strokeWidth="0dp"
         app:cardBackgroundColor="@color/white"
         app:cardElevation="@dimen/_4sdp"
@@ -31,7 +32,6 @@
                 android:layout_width="@dimen/_24sdp"
                 android:layout_height="@dimen/_24sdp"
                 android:src="@drawable/app_logo"
-
                 app:layout_constraintEnd_toStartOf="@+id/tv_app_title"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -41,7 +41,7 @@
                 android:id="@+id/tv_app_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Local Guru"
+                android:text="@string/local_guru"
                 app:fontFamily="@font/dm_sans_bold"
 
                 android:textSize="@dimen/_16ssp"
@@ -60,6 +60,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:orientation="vertical"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 
@@ -68,7 +69,6 @@
                     android:id="@+id/tv_agent_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="John D"
                     app:fontFamily="@font/dm_sans_medium"
                     android:textColor="@color/black"
                     android:textSize="@dimen/_10ssp"
@@ -80,7 +80,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:fontFamily="@font/dm_sans_regular"
-                    android:text="Mumbai Data Collector"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="@dimen/_10ssp"
                     android:textStyle="normal"
@@ -112,7 +111,6 @@
                     android:id="@+id/tv_agent_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="JD"
 
                     android:gravity="center"
                     android:layout_gravity="center"
@@ -133,7 +131,8 @@
 
 
 
-        <LinearLayout
+
+    <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent">

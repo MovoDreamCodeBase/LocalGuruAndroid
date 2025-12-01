@@ -6,6 +6,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class FormSchema(
     val formId: String,
+    val movodreamId: String,
     val title: String,
     val progress: Int?,
     val tags: List<String>,
@@ -45,7 +46,8 @@ data class FieldSchema(
     val minSelected: Int? = null,
     val captureRequired: Boolean? = null,
     val instructions: String? = null,
-    val regex: String? = null
+    val regex: String? = null,
+    val errorMessage: String? = null
 ): Parcelable
 @Parcelize
 data class Option(val value: String, val label: String): Parcelable

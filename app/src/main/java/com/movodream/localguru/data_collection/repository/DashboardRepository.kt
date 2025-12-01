@@ -4,10 +4,17 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.core.constants.AppConstants
+import com.data.remote.model.AgentTaskResponse
 import com.google.firebase.database.FirebaseDatabase
 import com.movodream.localguru.data_collection.model.FormSchema
 import com.movodream.localguru.data_collection.model.Parser
+import com.network.client.ApiClient
+import com.network.client.BaseRepository
+import com.network.client.ResponseHandler
+import com.network.model.ResponseData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 sealed class CategoryResult {
@@ -16,8 +23,9 @@ sealed class CategoryResult {
     object NotFound : CategoryResult()
     data class Error(val message: String) : CategoryResult()
 }
-class DashboardRepository {
+class DashboardRepository  : BaseRepository(){
 
+  val apiInterface =   ApiClient.getApiInterface()
     private val ref = FirebaseDatabase.getInstance()
         .getReference(AppConstants.FIREBASE_LOCAL_GURU_DB)
         .child(AppConstants.DYNAMIC_DATA_SET)
@@ -44,6 +52,20 @@ class DashboardRepository {
 
         } catch (e: Exception) {
             CategoryResult.Error(e.message ?: "Unexpected error")
+        }
+    }
+
+    suspend fun merchantDashboard(
+        agentId: String,
+    ): ResponseHandler<ResponseData<AgentTaskResponse>?> {
+
+        return withContext(Dispatchers.Default) {
+            return@withContext makeAPICallTemp {
+                apiInterface.getAssignedPOIToAgent(
+                    agentId
+                )
+            }
+
         }
     }
 }

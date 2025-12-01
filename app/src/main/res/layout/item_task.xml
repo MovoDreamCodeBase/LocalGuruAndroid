@@ -97,6 +97,33 @@
                     android:layout_marginTop="@dimen/_8sdp" />
 
 
+                <androidx.appcompat.widget.AppCompatImageView
+
+                    android:padding="@dimen/_4sdp"
+                    android:id="@+id/ivDirection"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tv_status"
+                    android:layout_gravity="center"
+                    app:srcCompat="@drawable/ic_direction"
+                    android:tint="@color/colorLightBlue1"
+
+                    android:layout_width="@dimen/_32ssp"
+                    android:layout_height="@dimen/_32sdp"/>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/ivCall"
+                    android:padding="@dimen/_4sdp"
+                    android:layout_marginHorizontal="@dimen/_8sdp"
+                    app:layout_constraintEnd_toStartOf="@+id/ivDirection"
+                    app:layout_constraintTop_toBottomOf="@id/tv_status"
+                    android:layout_gravity="center"
+                    app:srcCompat="@drawable/ic_call"
+                    android:tint="@color/colorLightBlue1"
+                    app:hideIfNotEmpty="@{task.contactNo}"
+                    android:layout_width="@dimen/_32ssp"
+                    android:layout_height="@dimen/_32sdp"/>
+
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_sub_tasks"
                     android:layout_width="0dp"

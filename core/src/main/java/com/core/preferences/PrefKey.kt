@@ -13,5 +13,7 @@ object PrefKey {
 
     const val PHONE_NUMBER = "phoneNumber"
     const val EMAIL = "email"
+    const val LATITUDE = "lat"
+    const val LONGITUDE = "longs"
 
 }

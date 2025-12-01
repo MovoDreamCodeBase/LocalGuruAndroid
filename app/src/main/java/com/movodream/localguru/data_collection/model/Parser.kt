@@ -9,6 +9,7 @@ object Parser {
     fun parseFormSchema(json: JSONObject): FormSchema {
         val formId = json.optString("form_id", "")
         val title = json.optString("title", "")
+        val movoId = json.optString("movodreamId", "")
         val progress = if (json.has("progress")) json.optInt("progress") else null
         val tags = mutableListOf<String>().apply {
             val arr = json.optJSONArray("tags")
@@ -22,7 +23,7 @@ object Parser {
         }
         val sb = json.optJSONObject("submit_button") ?: JSONObject()
 
-        return FormSchema(formId, title, progress, tags, tabs)
+        return FormSchema(formId, movoId,title,progress, tags, tabs)
     }
 
     private fun parseTab(obj: JSONObject): TabSchema {
@@ -65,7 +66,8 @@ object Parser {
             minSelected = f.optIntOrNull("minSelected"),
             regex = f.optString("regex", null),
             captureRequired = f.optBooleanOrNull("capture_required"),
-            instructions = f.optString("instructions", null)
+            instructions = f.optString("instructions", null),
+                    errorMessage = f.optString("errorMessage", null)
         )
     }
 

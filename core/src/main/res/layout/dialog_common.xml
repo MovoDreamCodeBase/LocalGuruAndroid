@@ -12,7 +12,8 @@
         android:id="@+id/dialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
+        android:fontFamily="@font/dm_sans_medium"
         android:textSize="@dimen/_14ssp"
         android:textStyle="bold"
         android:paddingBottom="@dimen/_8sdp" />

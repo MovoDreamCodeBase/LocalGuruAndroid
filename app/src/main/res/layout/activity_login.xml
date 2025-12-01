@@ -113,8 +113,8 @@
                             android:layout_marginHorizontal="@dimen/_10sdp"
                             android:layout_centerVertical="true"
                             app:srcCompat="@drawable/ic_call"
-                            android:layout_width="@dimen/_24sdp"
-                            android:layout_height="@dimen/_24sdp"/>
+                            android:layout_width="@dimen/_20sdp"
+                            android:layout_height="@dimen/_20sdp"/>
 
                         <androidx.appcompat.widget.AppCompatEditText
                             android:background="@null"
@@ -156,8 +156,8 @@
                             app:srcCompat="@drawable/ic_lock"
                             android:layout_marginHorizontal="@dimen/_10sdp"
                             android:layout_centerVertical="true"
-                            android:layout_width="@dimen/_24sdp"
-                            android:layout_height="@dimen/_24sdp"/>
+                            android:layout_width="@dimen/_20sdp"
+                            android:layout_height="@dimen/_20sdp"/>
 
                         <androidx.appcompat.widget.AppCompatEditText
                             android:background="@null"
@@ -220,6 +220,29 @@
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
+
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginBottom="@dimen/_16sdp"
+            android:gravity="bottom">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_gravity="center"
+                android:id="@+id/tvVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/dm_sans_medium"
+                android:gravity="bottom"
+                android:text="V 1.0.4"
+                android:textColor="@color/colorDarkGrey"
+                android:textSize="@dimen/_13sdp" />
+        </LinearLayout>
+
+
 
 
     </LinearLayout>

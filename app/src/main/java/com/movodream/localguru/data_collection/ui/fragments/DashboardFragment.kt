@@ -1,6 +1,8 @@
 package com.movodream.localguru.data_collection.ui.fragments
 
+import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,9 +12,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import com.core.utils.Utils
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.DashboardViewModel
 import com.movodream.localguru.data_collection.repository.CategoryResult
+import com.movodream.localguru.data_collection.ui.activities.DashboardActivity
 import com.movodream.localguru.data_collection.ui.activities.DynamicFormActivity
 import com.movodream.localguru.data_collection.ui.adapter.SummaryAdapter
 import com.movodream.localguru.data_collection.ui.adapter.TaskAdapter
@@ -20,7 +24,7 @@ import com.movodream.localguru.databinding.FragmentDashboardBinding
 
 class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
 
-    private  var selectedPOI: Int = -1;
+    private  var selectedPOI: TaskItem? = null
     private lateinit var binding: FragmentDashboardBinding
     private val dashboardViewModel: DashboardViewModel by activityViewModels()
     private val adapter = TaskAdapter(this)
@@ -73,25 +77,25 @@ class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
 
             when (state) {
                 CategoryResult.Loading -> {
-                  //  binding.progressBar.visibility = View.VISIBLE
+                    Utils.showProgressDialog(requireActivity())
                 }
 
                 is CategoryResult.Success -> {
-                   // binding.progressBar.visibility = View.GONE
+                    Utils.hideProgressDialog()
 
                     Log.d("Dashboard", "Dashboard SUCCESS fired once")
 
                     val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
                     intent.putExtra("KEY_SCHEMA", state.data)
-                    intent.putExtra("KEY_POI_ID", selectedPOI)
-                    startActivity(intent)
+                    intent.putExtra("KEY_POI", selectedPOI)
+                    startActivityForResult(intent,101)
 
                     dashboardViewModel.resetCategoryState()
                     dashboardViewModel.clearCaller()
                 }
 
                 CategoryResult.NotFound -> {
-                   // binding.progressBar.visibility = View.GONE
+                    Utils.hideProgressDialog()
                     Toast.makeText(requireActivity(), "Category not found", Toast.LENGTH_SHORT).show()
 
                     dashboardViewModel.resetCategoryState()
@@ -99,7 +103,7 @@ class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
                 }
 
                 is CategoryResult.Error -> {
-                  //  binding.progressBar.visibility = View.GONE
+                    Utils.hideProgressDialog()
                     Toast.makeText(requireActivity(), state.message, Toast.LENGTH_SHORT).show()
 
                     dashboardViewModel.resetCategoryState()
@@ -118,10 +122,35 @@ class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
     }
 
     override fun onActionButton1Clicked(option: TaskItem) {
-        selectedPOI = option.poiId
+        selectedPOI = option
         dashboardViewModel.setCaller("DASHBOARD")
         dashboardViewModel.loadCategory(option.categoryId)
     }
 
     override fun onActionButton2Clicked(option: TaskItem) {}
+    override fun onActionCallClicked(option: TaskItem) {
+        val intent = Intent(Intent.ACTION_DIAL)
+        intent.data = Uri.parse("tel:${option.contactNo}")
+        requireContext().startActivity(intent)
+    }
+
+    override fun onActionDirectionClicked(option: TaskItem) {
+        val gmmIntentUri = Uri.parse("google.navigation:q=${option.latitude},${option.longitude}")
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+        mapIntent.setPackage("com.google.android.apps.maps")
+
+        try {
+            startActivity(mapIntent)
+        } catch (e: Exception) {
+            // Google Maps not installed → Open in any map app / browser
+            val browserUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${option.latitude},${option.longitude}")
+            startActivity(Intent(Intent.ACTION_VIEW, browserUri))
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode==101 && resultCode == Activity.RESULT_OK){
+            (activity as? DashboardActivity)?.callDashboardAPI()
+        }
+    }
 }

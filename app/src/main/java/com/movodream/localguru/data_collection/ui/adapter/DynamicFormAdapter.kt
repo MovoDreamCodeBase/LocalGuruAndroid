@@ -26,7 +26,9 @@ class DynamicFormAdapter(
     private val onPickImages: (fieldId: String) -> Unit,
     private val onRequestLocation: (latFieldId: String, lngFieldId: String) -> Unit,
     private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
-    private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit
+    private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit,
+    private val onAddNotification: () -> Unit,
+    private val onRemoveNotification: (index: Int) -> Unit
 ) : RecyclerView.Adapter<DynamicFormAdapter.FieldVH>() {
 
     private var fields: List<FieldSchema> = emptyList()
@@ -50,7 +52,7 @@ class DynamicFormAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FieldVH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_field_container, parent, false)
-        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto)
+        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto,onAddNotification,onRemoveNotification)
     }
 
     override fun onBindViewHolder(holder: FieldVH, position: Int) {
@@ -65,7 +67,9 @@ class DynamicFormAdapter(
         private val onPickImages: (fieldId: String) -> Unit,
         private val onRequestLocation: (latFieldId: String, lngFieldId: String) -> Unit,
         private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
-        private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit
+        private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit,
+        private val onAddNotification: () -> Unit,
+        private val onRemoveNotification: (index: Int) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
         private val label = itemView.findViewById<TextView>(R.id.label)
         private val host = itemView.findViewById<FrameLayout>(R.id.control_host)
@@ -106,7 +110,7 @@ class DynamicFormAdapter(
                         background = context.getDrawable(R.drawable.bg_input_bordered)
                         setPadding(24, 36, 24, 36)
                         textSize = 15f
-                        // hint = field.placeholder ?: field.label
+                         hint = field.placeholder ?: field.label
                         setText(value as? String ?: "")
                         inputType = InputType.TYPE_CLASS_TEXT
                         typeface = ResourcesCompat.getFont(itemView.context, com.core.R.font.dm_sans_medium)
@@ -137,7 +141,7 @@ class DynamicFormAdapter(
                         background = context.getDrawable(R.drawable.bg_input_bordered)
                         setPadding(24, 36, 24, 36)
                         textSize = 15f
-                        // hint = field.placeholder ?: field.label
+                         hint = field.placeholder ?: field.label
                         setText(value as? String ?: "")
                         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
                         minLines = 3
@@ -554,12 +558,95 @@ class DynamicFormAdapter(
                     host.addView(container)
                 }
 
+               "notification_list" -> {
+    val ctx = itemView.context
+    val container = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(8, 8, 8, 8)
+    }
 
+    val list = (value as? List<Map<String, Any?>>) ?: emptyList()
 
+    // ----------------------------
+    // Render Notification Items
+    // ----------------------------
+    list.forEachIndexed { index, item ->
 
+        val card = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = ContextCompat.getDrawable(ctx, R.drawable.bg_input_bordered)
+            setPadding(20, 20, 20, 20)
+        }
 
+        val title = TextView(ctx).apply {
+            text = item["notificationCategories"]?.toString() ?: ""
+            setTextColor(Color.BLACK)
+            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_bold)
+            textSize = 16f
+        }
 
+        val desc = TextView(ctx).apply {
+            text = item["notificationLanguageAvailability"]?.toString() ?: ""
+            setTextColor(Color.BLACK)
+            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_regular)
+            textSize = 12f
+        }
 
+//        val meta = TextView(ctx).apply {
+//            val cat = item["category"] ?: ""
+//            val active = item["active"] ?: ""
+//            text = "Type: $cat | Active: $active"
+//            setTextColor(Color.GRAY)
+//            textSize = 12f
+//        }
+
+        val deleteBtn = ImageView(ctx).apply {
+            setImageResource(R.drawable.ic_delete)
+            layoutParams = LinearLayout.LayoutParams(45, 45).apply {
+                topMargin = 10
+                gravity = Gravity.END
+            }
+            setOnClickListener { onRemoveNotification(index) }
+        }
+
+        card.addView(title)
+        card.addView(desc)
+       // card.addView(meta)
+        card.addView(deleteBtn)
+
+        val wrapper = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 10, 0, 10)
+        }
+
+        wrapper.addView(card)
+        container.addView(wrapper)
+    }
+
+                    // ------------------------------------------------------------
+                    // 2) Add Notification Button
+                    // ------------------------------------------------------------
+                    val addBtn = TextView(ctx).apply {
+                        text = "Add Notification"
+                        textSize = 13f
+                        setPadding(24, 12, 24, 12)
+                        background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                        setTextColor(Color.WHITE)
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+
+                        val params = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        params.topMargin = 12.dpToPx(ctx)
+                        layoutParams = params
+                    }
+
+                    addBtn.setOnClickListener { onAddNotification() }
+
+                    container.addView(addBtn)
+                    host.addView(container)
+                }
 
                 else -> {
                     val tv = TextView(itemView.context).apply { text = "Unsupported: ${field.type}" }
@@ -568,7 +655,10 @@ class DynamicFormAdapter(
             }
         }
     }
-
+    fun updateValue(fieldId: String, value: Any?) {
+        val index = fields.indexOfFirst { it.id == fieldId }
+        if (index != -1) notifyItemChanged(index)
+    }
     fun getCurrentFields(): List<FieldSchema> = fields
 }
 fun Int.dpToPx(ctx: Context): Int =

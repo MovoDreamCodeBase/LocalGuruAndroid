@@ -11,6 +11,10 @@ open class ResponseData<T> {
     @Expose
     var code: Int? = 0
 
+    @SerializedName("success")
+    @Expose
+    var isSuccess: Boolean? = false
+
     @SerializedName("message")
     @Expose
     var message: String? = ""

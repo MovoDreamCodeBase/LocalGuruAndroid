@@ -13,25 +13,37 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:allowBackup="true"
+        android:name=".AppBase"
+
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/app_logo"
         android:label="@string/app_name"
         android:roundIcon="@drawable/app_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.LocalGuru">
+        <activity
+            android:name=".data_collection.ui.activities.MapPickerActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCgHzeOOhCzghg1qfem3ZljXfTXeZP2h30" />
 
         <activity
             android:name=".data_collection.ui.activities.DynamicFormActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan" />
-
+            android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".data_collection.ui.activities.DashboardActivity"
-            android:exported="false"/>
+            android:screenOrientation="portrait"
+            android:exported="false" />
         <activity
             android:name=".login.ui.LoginActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -22,7 +22,7 @@ android {
     }
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://merchantapp.paymntstack.com/paymentstack/omini/\"")
+            buildConfigField("String", "BASE_URL", "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\"")
         }
         release {
 
@@ -31,7 +31,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://merchantapp.paymntstack.com/paymentstack/omini/\"")
+            buildConfigField("String", "BASE_URL", "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\"")
         }
     }
     compileOptions {

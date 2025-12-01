@@ -1,27 +1,35 @@
 package com.movodream.localguru.data_collection.ui.activities
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.core.base.BaseActivity
 import com.core.customviews.CustomDialogBuilder
+import com.core.utils.DebugLog
 import com.core.utils.PermissionUtils
+import com.core.utils.Utils
 import com.google.android.material.card.MaterialCardView
 import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.FormSchema
-import com.movodream.localguru.data_collection.model.MockNetwork
+import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.FormViewModel
 import com.movodream.localguru.data_collection.ui.adapter.DynamicFormAdapter
 import com.movodream.localguru.data_collection.ui.adapter.TabAdapter
+import com.network.client.ResponseHandler
+import com.network.model.ResponseData
 import kotlin.collections.indexOfFirst
 
 
@@ -41,7 +49,7 @@ class DynamicFormActivity : BaseActivity() {
     private var currentPhotoFieldId: String? = null
     private var lastShownTabId: String? = null
     private var poiId = -1
-
+    private  var selectedPOI: TaskItem? = null
 
     private var pendingLatField = ""
     private var pendingLngField = ""
@@ -68,7 +76,10 @@ class DynamicFormActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dynamic_form)
-
+        val schema : FormSchema? = intent.getParcelableExtra("KEY_SCHEMA") as FormSchema?
+        selectedPOI =
+            intent.getParcelableExtra("KEY_POI") as TaskItem?
+        selectedPOI?.let { poiId = it.poiId }
         vm = ViewModelProvider(
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
@@ -81,6 +92,29 @@ class DynamicFormActivity : BaseActivity() {
         recycler = findViewById(R.id.recycler)
         saveBtn = findViewById(R.id.cv_btn_save)
         submitBtn = findViewById(R.id.cv_btn_submit)
+
+       val tvAgentProfile: AppCompatTextView=findViewById(R.id.tv_agent_profile)
+        val tvAgentLocation: AppCompatTextView=findViewById(R.id.tv_agent_location)
+        val tvAgentName: AppCompatTextView=findViewById(R.id.tv_agent_name)
+
+        tvAgentName.text = selectedPOI!!.agentName
+        tvAgentLocation.text = selectedPOI!!.agentLocation +" Data Collector"
+
+        if (selectedPOI!!.agentName.isNullOrBlank()) {
+            tvAgentProfile.text = ""
+
+        }else {
+
+            val parts = selectedPOI!!.agentName.trim().split(" ")
+
+            val initials = parts
+                .filter { it.isNotBlank() }
+                .map { it.first().uppercaseChar() }
+                .take(2)     // only first 2 characters (J + D)
+                .joinToString("")
+
+            tvAgentProfile.text  = initials
+        }
 
         // Tab recycler setup
         tabAdapter = TabAdapter { tab -> showTab(tab.id) }
@@ -108,7 +142,20 @@ class DynamicFormActivity : BaseActivity() {
                 requestLocationPermission(latId, lngId)
             },
             onFieldChanged = { id, value -> vm.updateValue(id, value) },
-            onRemovePhoto = { fieldId, uri -> vm.removePhotoUri(fieldId, uri) }
+            onRemovePhoto = { fieldId, uri -> vm.removePhotoUri(fieldId, uri) },
+            onAddNotification = onAdd@{
+                val errors = vm.addNotification()
+
+                if (errors.isNotEmpty()) {
+                    Toast.makeText(this, errors.values.first(), Toast.LENGTH_LONG).show()
+                    return@onAdd
+                }
+
+                Toast.makeText(this, "Notification added", Toast.LENGTH_SHORT).show()
+            },onRemoveNotification = { index ->
+                vm.removeNotification(index)
+                Toast.makeText(this, "Notification removed", Toast.LENGTH_SHORT).show()
+            }
         )
         adapter.setHasStableIds(true)
         recycler.adapter = adapter
@@ -116,11 +163,11 @@ class DynamicFormActivity : BaseActivity() {
         // Observe schema
         vm.schemaLive.observe(this) { schema ->
             schema?.let {
-                titleTv.text = it.title
-                progressTv.text = "${it.progress ?: 0}%"
+                titleTv.text = selectedPOI!!.poiName
+                progressTv.text = "${selectedPOI!!.progress ?: 0}%"
                 categoryTV.text = it.tags[0]
                 tabAdapter.submitTabs(it.tabs)
-                it.tabs.firstOrNull()?.let { tab -> showTab(tab.id) }
+               // it.tabs.firstOrNull()?.let { tab -> showTab(tab.id) }
             }
         }
 
@@ -129,9 +176,13 @@ class DynamicFormActivity : BaseActivity() {
 //            val pos = adapterPositionForField(fieldId)
 //            if (pos >= 0) adapter.notifyItemChanged(pos)
 //        }
-        vm.fieldChangeLive.observe(this) {
+        vm.fieldChangeLive.observe(this) { fieldId ->
+           // adapter.updateValue(fieldId, vm.valuesLive.value?.get(fieldId))
             refreshCurrentTab()
         }
+//        vm.fieldChangeLive.observe(this) {
+//            refreshCurrentTab()
+//        }
 
         // Save draft + move to next tab
         saveBtn.setOnClickListener {
@@ -158,7 +209,7 @@ class DynamicFormActivity : BaseActivity() {
 //                    .show()
             } else {
                // val payload = vm.buildPayload()
-                vm.submit(""+poiId)
+               // vm.submit(""+poiId)
 
             }
         }
@@ -173,10 +224,10 @@ class DynamicFormActivity : BaseActivity() {
                 return@setOnClickListener
             }
            // val payload = vm.buildPayload()
-            vm.submit(""+poiId)
-            Toast.makeText(this, "Data Saved Successfully...", Toast.LENGTH_SHORT)
-                .show()
-            finish()
+            vm.submit(""+poiId,selectedPOI)
+//            Toast.makeText(this, "Data Saved Successfully...", Toast.LENGTH_SHORT)
+//                .show()
+//            finish()
         }
 
         // Load schema from backend mock
@@ -186,22 +237,113 @@ class DynamicFormActivity : BaseActivity() {
 //        }else{
 //           s   = MockNetwork.fetchSchemaString()
 //        }
-        val schema : FormSchema? = intent.getParcelableExtra("KEY_SCHEMA") as FormSchema?
-        poiId = intent.getIntExtra("KEY_POI_ID",-1)
+
+
         vm.loadSchemaFromString(schema)
 
         // STEP 2 → Load draft (async) and restore values
-        vm.loadDraft(""+poiId) {
-
-            // STEP 3 → After draft loaded, now build UI
+//        vm.loadDraft(""+poiId) {
+//
+//            // STEP 3 → After draft loaded, now build UI
+//            val loadedSchema = vm.schemaLive.value ?: return@loadDraft
+//
+//            titleTv.text = loadedSchema.title
+//            tabAdapter.submitTabs(loadedSchema.tabs)
+//
+//            // Open first tab
+//            loadedSchema.tabs.firstOrNull()?.let { showTab(it.id) }
+//            if (schema != null) {
+//                adapter.submitFields(schema.tabs.first().fields, vm.valuesLive.value ?: emptyMap())
+//            }
+//        }
+        vm.loadDraft("" + poiId) {
             val loadedSchema = vm.schemaLive.value ?: return@loadDraft
-
-            titleTv.text = loadedSchema.title
-            tabAdapter.submitTabs(loadedSchema.tabs)
-
-            // Open first tab
-            loadedSchema.tabs.firstOrNull()?.let { showTab(it.id) }
+            val firstTab = loadedSchema.tabs.first()
+            showTab(firstTab.id)   // spinner restores correctly
         }
+
+
+
+        setObserver()
+    }
+
+    private fun setObserver() {
+
+
+        vm.submitPOIResponse.observe(
+            this,
+            androidx.lifecycle.Observer { state ->
+                if (state == null) {
+                    return@Observer
+                }
+
+                when (state) {
+
+                    is ResponseHandler.Loading -> {
+                        Utils.showProgressDialog(this)
+                    }
+                    is ResponseHandler.OnFailed -> {
+                        Utils.hideProgressDialog()
+
+                        if (state.code == 401) {
+                            //  Utils.showUnAuthAlertDialog(this)
+                        } else {
+                            state.message.let { m ->
+                                DebugLog.e("Config Api Error Response : $m")
+
+
+                                CustomDialogBuilder(this)
+                                    .setTitle("Error")
+                                    .setMessage(m
+                                    )
+                                    .setPositiveButton("OK") {
+
+
+                                    }
+                            }
+                                .setCancelable(false)
+                                .show()
+                        }
+                    }
+
+
+                    is ResponseHandler.OnSuccessResponse<ResponseData<Int>?> -> {
+
+                        state.response?.let {
+                            Utils.hideProgressDialog()
+                            CustomDialogBuilder(this)
+                                .setTitle("Successful")
+                                .setMessage("Data Submitted Successfully"
+                                )
+                                .setPositiveButton("OK") {
+
+
+                                    vm.deleteDraftAfterSubmit(""+poiId) {
+                                        setResult(Activity.RESULT_OK)
+                                        finish()  // close after draft is removed
+                                    }
+                                }
+
+                            .setCancelable(false)
+                            .show()
+
+                        }
+
+
+                        Utils.hideProgressDialog()
+
+                    }
+                }
+            })
+
+        vm.locationFetchState.observe(this, Observer{
+            if(it){
+
+
+            }else{
+                Toast.makeText(this@DynamicFormActivity,"Please try again...", Toast.LENGTH_LONG).show()
+            }
+        })
 
 
     }
@@ -326,8 +468,26 @@ class DynamicFormActivity : BaseActivity() {
     }
 
     private fun fetchLocation(){
-        Toast.makeText(this@DynamicFormActivity,"Fetching your location, please wait…", Toast.LENGTH_LONG).show()
-        vm.fetchAccurateLocation(pendingLatField, pendingLngField)
+//        Toast.makeText(this@DynamicFormActivity,"Fetching your location, please wait…", Toast.LENGTH_LONG).show()
+//        vm.fetchAccurateLocation(pendingLatField, pendingLngField)
+        mapLauncher.launch(Intent(this, MapPickerActivity::class.java))
     }
+
+    private val mapLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val lat = result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
+                val lng = result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
+
+                vm.updateValue("latitude", lat)
+                vm.updateValue("longitude", lng)
+
+                vm.notifyFieldChanged("latitude")
+                vm.notifyFieldChanged("longitude")
+            }
+        }
+
+
+
 
 }

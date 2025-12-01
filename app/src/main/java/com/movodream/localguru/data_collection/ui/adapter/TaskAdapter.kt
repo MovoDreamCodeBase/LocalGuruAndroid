@@ -42,6 +42,12 @@ class TaskAdapter(
             binding.cvBtnSecondary.setOnClickListener {
                 clickListener.onActionButton2Clicked(item)
             }
+            binding.ivCall.setOnClickListener {
+                clickListener.onActionCallClicked(item)
+            }
+            binding.ivDirection.setOnClickListener {
+                clickListener.onActionDirectionClicked(item)
+            }
         }
     }
 
@@ -64,6 +70,8 @@ class TaskAdapter(
     interface TasksClickListener {
         fun onActionButton1Clicked(option: TaskItem)
         fun onActionButton2Clicked(option: TaskItem)
+        fun onActionCallClicked(option: TaskItem)
+        fun onActionDirectionClicked(option: TaskItem)
     }
 }
 

@@ -10,7 +10,10 @@ import com.core.R
 import com.core.constants.AppConstants
 import com.google.android.material.card.MaterialCardView
 
-
+@BindingAdapter("hideIfNotEmpty")
+fun AppCompatImageView.hideIfNotEmpty(value: String?) {
+    visibility = if (!value.isNullOrBlank()) View.VISIBLE else View.INVISIBLE
+}
 @BindingAdapter(/* ...value = */ "app:src")
 fun setImageResource(imageView: AppCompatImageView, resId: Int) {
 
@@ -183,5 +186,23 @@ fun setActionButton2Text(textView: AppCompatTextView, status: String?) {
         else -> "Issue"
     }
     textView.text = text
+}
+
+@BindingAdapter("initialsFromName")
+fun AppCompatTextView.setInitialsFromName(name: String?) {
+    if (name.isNullOrBlank()) {
+        text = ""
+        return
+    }
+
+    val parts = name.trim().split(" ")
+
+    val initials = parts
+        .filter { it.isNotBlank() }
+        .map { it.first().uppercaseChar() }
+        .take(2)     // only first 2 characters (J + D)
+        .joinToString("")
+
+    text = initials
 }
 
