@@ -65,5 +65,7 @@ dependencies {
     api(libs.androidx.fragment.ktx)
     api("com.google.android.gms:play-services-location:21.3.0")
     api("com.google.android.gms:play-services-maps:19.2.0")
+    api ("com.github.bumptech.glide:glide:5.0.5")
+    kapt ("com.github.bumptech.glide:compiler:5.0.5")
 
 }

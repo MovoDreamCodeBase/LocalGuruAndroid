@@ -84,11 +84,15 @@ class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
                     Utils.hideProgressDialog()
 
                     Log.d("Dashboard", "Dashboard SUCCESS fired once")
+                   if(selectedPOI!!.revisionRequired){
+                       (activity as? DashboardActivity)?.callRevisionDataAPI(state.data,selectedPOI)
+                   }else{
+                       val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
+                       intent.putExtra("KEY_SCHEMA", state.data)
+                       intent.putExtra("KEY_POI", selectedPOI)
+                       startActivityForResult(intent,101)
+                   }
 
-                    val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
-                    intent.putExtra("KEY_SCHEMA", state.data)
-                    intent.putExtra("KEY_POI", selectedPOI)
-                    startActivityForResult(intent,101)
 
                     dashboardViewModel.resetCategoryState()
                     dashboardViewModel.clearCaller()

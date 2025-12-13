@@ -1,14 +1,18 @@
 package com.network.api
 
 import com.data.remote.model.AgentTaskResponse
+import com.data.remote.model.DeletePhotoRequest
 import com.data.remote.model.LoginRequest
 import com.data.remote.model.LoginResponse
+import com.data.remote.model.RevisionDataResponse
 import com.network.model.ResponseData
+import com.network.model.ResponseListData
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.json.JSONObject
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -40,6 +44,22 @@ interface ApiInterface {
         @Part GalleryPhotos: List<MultipartBody.Part>
     ): Response<ResponseData<Int>>
 
+    @GET("PointofInterest/get-poi/{agentId}/{poiId}")
+    suspend fun getRevisionData(
+        @Path("agentId") agentId: String,
+        @Path("poiId") poiId: String
+    ): Response<ResponseListData<RevisionDataResponse>>
 
+    @Multipart
+    @POST("PointofInterest/agent-details/update")
+    suspend fun updatePOIDetails(
+        @Part("payload") payload: RequestBody,
+        @Part GalleryPhotos: List<MultipartBody.Part>
+    ): Response<ResponseData<Int>>
+
+     @POST("PointofInterest/delete-poi-images")
+    suspend fun deleteGalleryPhotos(
+        @Body body: DeletePhotoRequest
+    ): Response<ResponseData<Int>>
 
 }

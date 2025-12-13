@@ -3,6 +3,7 @@ package com.movodream.localguru.data_collection.repository
 import com.data.local.dao.DraftDao
 import com.data.local.entity.DraftEntity
 import com.data.remote.model.AgentTaskResponse
+import com.data.remote.model.DeletePhotoRequest
 import com.network.client.ApiClient
 import com.network.client.BaseRepository
 import com.network.client.ResponseHandler
@@ -28,6 +29,10 @@ class DraftRepository(private val dao: DraftDao): BaseRepository() {
     suspend fun deleteDraft(poiId: String) =
         dao.deleteDraft(poiId)
 
+    suspend fun hasDraft(poiId: String): Boolean {
+        return dao.hasDraft(poiId) > 0
+    }
+
     suspend fun submitPOIData(
          body: Map<String, Any>,
     ): ResponseHandler<ResponseData<Int>?> {
@@ -50,6 +55,29 @@ class DraftRepository(private val dao: DraftDao): BaseRepository() {
         return withContext(Dispatchers.IO) {
             makeAPICallTemp {
                 apiInterface.submitPOIDetails(data, files)
+            }
+        }
+    }
+
+    suspend fun updatePOIData(
+        data: RequestBody,
+        files: List<MultipartBody.Part>
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.IO) {
+            makeAPICallTemp {
+                apiInterface.updatePOIDetails(data, files)
+            }
+        }
+    }
+
+    suspend fun deleteGalleryPhoto(
+        data: DeletePhotoRequest
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.IO) {
+            makeAPICallTemp {
+                apiInterface.deleteGalleryPhotos(data)
             }
         }
     }

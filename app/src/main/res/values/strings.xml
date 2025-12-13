@@ -16,4 +16,9 @@
     <string name="phone_number">Phone Number</string>
     <string name="local_guru">Local Guru</string>
     <string name="use_this_location">Use this Location</string>
+    <string name="gallery_photos">Gallery Photos</string>
+    <string name="share">Share</string>
+    <string name="Update">Update</string>
+    <string name="add_poi">Add POI</string>
+    <string name="add_sub_poi">Add Sub POI</string>
 </resources>

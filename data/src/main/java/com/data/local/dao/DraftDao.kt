@@ -21,4 +21,7 @@ interface DraftDao {
 
     @Query("DELETE FROM draft_table WHERE poiId = :poiId")
     suspend fun deleteDraft(poiId: String)
+
+    @Query("SELECT COUNT(*) FROM draft_table WHERE poiId = :poiId")
+    suspend fun hasDraft(poiId: String): Int
 }

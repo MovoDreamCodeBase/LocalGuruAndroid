@@ -1,7 +1,6 @@
 package com.movodream.localguru.data_collection.presentation
 
 
-
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,8 +11,10 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.core.utils.Utils
 import com.data.local.AppDatabase
 import com.data.local.entity.DraftEntity
+import com.data.remote.model.DeletePhotoRequest
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -47,7 +48,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         AppDatabase.getDatabase(getApplication())
     }
 
-    private lateinit var selectedPOIData : TaskItem
+    private lateinit var selectedPOIData: TaskItem
     private val repository by lazy {
         DraftRepository(database.draftDao())
     }
@@ -56,81 +57,48 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val _locationFetchState = MutableLiveData<Boolean>()
+    var _isRevisionState = MutableLiveData<Boolean>()
     val locationFetchState = _locationFetchState
-    sealed class FormState {
-        object Idle : FormState()
-        data class ValidationError(val errors: Map<String, String>) : FormState()
-        data class ReadyToSubmit(val payload: JSONObject) : FormState()
-        data class SubmitResult(val success: Boolean, val message: String?) : FormState()
-    }
 
+
+    var deleteGalleryPhoto =
+        MutableLiveData<ResponseHandler<ResponseData<Int>?>>()
     val photoUris = mutableMapOf<String, MutableList<Uri>>()  // stores URIs per field
 
+    //  existing photos coming from server as URLs
+    val photoUrls = mutableMapOf<String, MutableList<String>>()
     val schemaLive = MutableLiveData<FormSchema?>()
+
     // current values for all fields
     val valuesLive = MutableLiveData<MutableMap<String, Any?>>().apply { value = mutableMapOf() }
+
     // in-memory draft store per tab (optimized json-like map)
-    val draftPerTab = MutableLiveData<MutableMap<String, Map<String, Any?>>>().apply { value = mutableMapOf() }
-    val formState = MutableLiveData<FormState>(FormState.Idle)
+    val draftPerTab =
+        MutableLiveData<MutableMap<String, Map<String, Any?>>>().apply { value = mutableMapOf() }
 
-//    fun loadSchemaFromString(jsonStr: FormSchema?) {
-//        viewModelScope.launch(Dispatchers.Default) {
-////            val j = JSONObject(jsonStr)
-////            val parsed = Parser.parseFormSchema(j)
-//            schemaLive.postValue(jsonStr)
-//            val map = valuesLive.value ?: mutableMapOf()
-//            jsonStr!!.tabs.flatMap { it.fields }.forEach { if (!map.containsKey(it.id)) map[it.id] = "" }
-//            valuesLive.postValue(map)
-//        }
-//    }
-fun loadSchemaFromString(jsonStr: FormSchema?) {
-//    viewModelScope.launch(Dispatchers.Default) {
-//
-//        if (jsonStr == null) return@launch
-//
-//        // Save schema
-//        schemaLive.postValue(jsonStr)
-//
-//        // Start from existing values (e.g., after draft load)
-//        val existing = valuesLive.value ?: mutableMapOf()
-//        val merged = mutableMapOf<String, Any?>()
-//        merged.putAll(existing)
-//
-//        // Ensure every field id has some initial value
-//        jsonStr.tabs.flatMap { it.fields }.forEach { field ->
-//            if (!merged.containsKey(field.id)) {
-//                merged[field.id] = when (field.type) {
-//                    "checkbox_group" -> emptyList<String>()
-//                    "photo_list" -> emptyList<String>()
-//                    else -> ""
-//                }
-//            }
-//        }
-//
-//        valuesLive.postValue(merged)
-//    }
-    if (jsonStr == null) return
+    fun loadSchemaFromString(jsonStr: FormSchema?) {
+        if (jsonStr == null) return
 
-    // 1) set schema immediately
-    schemaLive.value = jsonStr
+        // 1) set schema immediately
+        schemaLive.value = jsonStr
 
-    // 2) start from existing values (e.g., after draft load)
-    val existing = valuesLive.value ?: mutableMapOf()
-    val merged = mutableMapOf<String, Any?>()
-    merged.putAll(existing)
+        // 2) start from existing values (e.g., after draft load)
+        val existing = valuesLive.value ?: mutableMapOf()
+        val merged = mutableMapOf<String, Any?>()
+        merged.putAll(existing)
 
-    // 3) ensure every field id has some initial value
-    jsonStr.tabs.flatMap { it.fields }.forEach { field ->
-        if (!merged.containsKey(field.id)) {
-            merged[field.id] = when (field.type) {
-                "checkbox_group" -> mutableListOf<String>()
-                else -> ""
+        // 3) ensure every field id has some initial value
+        jsonStr.tabs.flatMap { it.fields }.forEach { field ->
+            if (!merged.containsKey(field.id)) {
+                merged[field.id] = when (field.type) {
+                    "checkbox_group" -> mutableListOf<String>()
+                    else -> ""
+                }
             }
         }
-    }
 
-    valuesLive.value = merged
-}
+        valuesLive.value = merged
+    }
 
 
     fun updateValue(fieldId: String, value: Any?) {
@@ -224,7 +192,11 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             // ----------------------------------------------------
             if ((f.type == "text" || f.type == "textarea") && !f.regex.isNullOrEmpty()) {
                 if (v is String && v.isNotEmpty()) {
-                    val regex = try { Regex(f.regex) } catch (_: Exception) { null }
+                    val regex = try {
+                        Regex(f.regex)
+                    } catch (_: Exception) {
+                        null
+                    }
                     val output = v.replace(Regex("\\s+"), " ").trim()
                     if (regex != null && !regex.matches(output)) {
                         if (f.errorMessage.isNullOrBlank()) {
@@ -338,14 +310,24 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                     return@forEach
                 }
 
-                // -----------------------------
-                // PHOTO LIST → store URI strings
-                // -----------------------------
+
                 if (fieldType == "photo_list") {
-                    val uriList = photoUris[fieldId] ?: emptyList()
+
                     val arr = JSONArray()
-                    uriList.forEach { uri -> arr.put(uri.toString()) }
+
+                    // 1️⃣ SERVER URLS (already stored as "url|id")
+                    photoUrls[fieldId]?.forEach { urlWithId ->
+                        arr.put(urlWithId)   // KEEP PIPE FORMAT
+                    }
+
+                    // 2️⃣ LOCAL PHOTOS
+                    photoUris[fieldId]?.forEach { uri ->
+                        arr.put(uri.toString()) // file:// URI
+                    }
+
+                    // SAVE merged list into draft
                     valuesObj.put(fieldId, arr)
+
                     return@forEach
                 }
 
@@ -379,8 +361,6 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
     }
 
 
-
-
     // -------------------------------------------------------------
     // Load draft: Convert file path → Uri
     // -------------------------------------------------------------
@@ -409,17 +389,17 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                     ?.firstOrNull { it.id == key }
                     ?.type
 
-                     // -------------------------------------------------------
-            // 1️⃣ FIX ROOT CAUSE: CLEAN any JSONObject → Map
-            // -------------------------------------------------------
-            if (v is JSONObject) {
-                val cleanMap = mutableMapOf<String, Any?>()
-                v.keys().forEach { k2 ->
-                    cleanMap[k2] = v.get(k2)
+                // -------------------------------------------------------
+                // 1️⃣ FIX ROOT CAUSE: CLEAN any JSONObject → Map
+                // -------------------------------------------------------
+                if (v is JSONObject) {
+                    val cleanMap = mutableMapOf<String, Any?>()
+                    v.keys().forEach { k2 ->
+                        cleanMap[k2] = v.get(k2)
+                    }
+                    restored[key] = cleanMap
+                    return@forEach
                 }
-                restored[key] = cleanMap
-                return@forEach
-            }
 
                 // -----------------------------
                 // RESTORE NOTIFICATION LIST
@@ -449,35 +429,61 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                 }
 
                 // -----------------------------
-                // RESTORE PHOTO LIST (URI strings)
-                // -----------------------------
-                if (fieldType == "photo_list" && v is JSONArray) {
+// RESTORE PHOTO LIST (URIs + URLs)
+// -----------------------------
+                if (fieldType == "photo_list") {
 
-                    val uriList = mutableListOf<Uri>()
-                    val strList = mutableListOf<String>()
+                    val raw = v  // always stored under "galleryPhotos"
+                    val serverUrls =
+                        photoUrls[key] ?: mutableListOf<String>()   // will store url|id
+                    val localUris = photoUris[key] ?: mutableListOf<Uri>()       // local file uris
 
-                    for (i in 0 until v.length()) {
+                    // CASE 1 → Server response for first revision (JSONArray of objects)
+                    if (raw is String && raw.startsWith("[")) {
+                        val arr = JSONArray(raw)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.getJSONObject(i)
+                            val id = obj.optString("img_id")
+                            val url = obj.optString("img_url")
 
-                        val raw = v.getString(i)
-
-                        // REMOVE file:// prefix
-                        val cleanPath = raw.replace("file://", "")
-
-                        val file = File(cleanPath)
-
-                        if (file.exists()) {
-                            val uri = Uri.fromFile(file)
-                            uriList.add(uri)
-                            strList.add(uri.toString())   // <-- use Uri string
+                            val pipe = "$url|$id"  // 🔥 combined format
+                            if (!serverUrls.contains(pipe)) serverUrls.add(pipe)
                         }
                     }
 
-                    photoUris[key] = uriList
-                    restored[key] = strList
+                    // CASE 2 → Draft already exists (JSONArray of pipe strings + file paths)
+                    if (raw is JSONArray) {
+                        for (i in 0 until raw.length()) {
+                            val item = raw.getString(i)
+
+                            if (item.contains("|")) {
+                                // 🔁 This is a stored server entry → "url|id"
+                                if (!serverUrls.contains(item)) serverUrls.add(item)
+                            } else {
+                                // Local file stored by user
+                                val clean = item.removePrefix("file://")
+                                val file = File(clean)
+                                if (file.exists()) {
+                                    val uri = Uri.fromFile(file)
+                                    if (!localUris.contains(uri)) localUris.add(uri)
+                                }
+                            }
+                        }
+                    }
+
+                    // Save back
+                    photoUrls[key] = serverUrls
+                    photoUris[key] = localUris
+
+                    // Merge for UI
+                    val merged = mutableListOf<String>().apply {
+                        addAll(serverUrls)                                // url|id items
+                        addAll(localUris.map { it.toString() })           // file uris
+                    }
+
+                    restored[key] = merged
                     return@forEach
                 }
-
-
 
 
                 // -----------------------------
@@ -490,107 +496,6 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             withContext(Dispatchers.Main) { onLoaded() }
         }
     }
-
-
-
-
-    // ---------------------------------------------------------
-    // BUILD PAYLOAD (WITH BASE64 PHOTOS)
-    // Runs on IO thread safely.
-    // ---------------------------------------------------------
-//    suspend fun buildPayloadAsync(): JSONObject = withContext(Dispatchers.IO) {
-//
-//        val schema = schemaLive.value!!
-//        val valuesObj = JSONObject()
-//        val current = valuesLive.value ?: mapOf()
-//
-//        // Skip raw notification input fields if we already have notifications list
-//        val notificationList = current["notifications"] as? List<*>
-//        val hasNotifications = notificationList?.isNotEmpty() == true
-//
-//        val skipNotificationFields = setOf(
-//            "notificationCategories",
-//            "userTargetGroup",
-//            "triggerType",
-//            "notificationPriorityLevel",
-//            "notificationLanguageAvailability",
-//        )
-//
-//        current.forEach { (key, v) ->
-//
-//            if (hasNotifications && key in skipNotificationFields)
-//                return@forEach
-//
-//            val fieldType = schema.tabs
-//                .flatMap { it.fields }
-//                .firstOrNull { it.id == key }
-//                ?.type
-//
-//            // -----------------------------
-//            // NOTIFICATION LIST
-//            // -----------------------------
-//            if (key == "notifications" && v is List<*>) {
-//                val arr = JSONArray()
-//                v.forEach { item ->
-//                    if (item is Map<*, *>) arr.put(JSONObject(item))
-//                }
-//                valuesObj.put(key, arr)
-//                return@forEach
-//            }
-//
-//            // -----------------------------
-//            // CHECKBOX GROUP
-//            // -----------------------------
-//            if (fieldType == "checkbox_group" && v is List<*>) {
-//                val arr = JSONArray()
-//                v.forEach { arr.put(it.toString()) }
-//                valuesObj.put(key, arr)
-//                return@forEach
-//            }
-//
-//            // -----------------------------
-//            // PHOTO LIST → BASE64
-//            // -----------------------------
-//            if (fieldType == "photo_list") {
-//                val arr = JSONArray()
-//
-//                // try to get URIs from in-memory cache
-//                var uriList = photoUris[key]
-//
-//                // fallback to valuesLive if cache empty
-//                if (uriList == null || uriList.isEmpty()) {
-//                    val restoredStrings = (v as? List<*>)?.map { it.toString() } ?: emptyList()
-//                    uriList = restoredStrings.map { Uri.parse(it) }.toMutableList()
-//                }
-//
-//                val base64List = uriList.mapNotNull { uri ->
-//                    try { uriToBase64(uri) } catch (e: Exception) { null }
-//                }
-//
-//                base64List.forEach { arr.put(it) }
-//
-//                valuesObj.put(key, arr)
-//                return@forEach
-//            }
-//
-//
-//            // -----------------------------
-//            // NORMAL FIELD
-//            // -----------------------------
-//          //  valuesObj.put(key, v ?: JSONObject.NULL)
-//
-//            val cleaned = cleanJsonValue(v)
-//            valuesObj.put(key, cleaned)
-//
-//        }
-//        valuesObj.put("movodreamId", schema.movodreamId)
-//        valuesObj.put("categoryId", selectedPOIData.categoryId)
-//        valuesObj.put("poiName", selectedPOIData.poiName)
-//        valuesObj.put("poiId", selectedPOIData.poiId)
-//        valuesObj.put("agentId", selectedPOIData.agentId)
-//        Log.d("SUBMIT DATA :", valuesObj.toString(10))
-//        return@withContext valuesObj
-//    }
 
     suspend fun buildPayloadAsync(): Map<String, Any> = withContext(Dispatchers.IO) {
 
@@ -649,10 +554,14 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                 }
 
                 val base64List = uriList.mapNotNull { uri ->
-                    try { uriToBase64(uri) } catch (_: Exception) { null }
+                    try {
+                        uriToBase64(uri)
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
 
-               // payloadMap[key] = base64List
+                // payloadMap[key] = base64List
                 payloadMap[key] = ""
                 return@forEach
             }
@@ -693,7 +602,7 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
         payloadMap["movodreamId"] = schema.movodreamId
         payloadMap["categoryId"] = selectedPOIData.categoryId
         payloadMap["poiName"] = selectedPOIData.poiName
-        payloadMap["PoiId"] = ""+selectedPOIData.poiId
+        payloadMap["PoiId"] = "" + selectedPOIData.poiId
         payloadMap["AgentId"] = selectedPOIData.agentId
         //payloadMap["AgentId"] = "109918"
 
@@ -716,65 +625,17 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
 
 
 
-//    private fun cleanJsonValue(value: Any?): Any? {
-//
-//        return when (value) {
-//
-//            null -> JSONObject.NULL
-//
-//            is JSONObject -> {
-//                val obj = JSONObject()
-//                value.keys().forEach { k ->
-//                    obj.put(k, cleanJsonValue(value.get(k)))
-//                }
-//                obj
-//            }
-//
-//            is Map<*, *> -> {
-//                val obj = JSONObject()
-//                value.forEach { (k, v) ->
-//                    obj.put(k.toString(), cleanJsonValue(v))
-//                }
-//                obj
-//            }
-//
-//            is List<*> -> {
-//                val arr = JSONArray()
-//                value.forEach { arr.put(cleanJsonValue(it)) }
-//                arr
-//            }
-//
-//            is Number, is Boolean, is String -> value
-//
-//            else -> value.toString()
-//        }
-//    }
-
-
-
-
-
     fun submit(poiId: String, selectedPOI: TaskItem?) {
         selectedPOIData = selectedPOI!!
-        //viewModelScope.launch(Dispatchers.IO) {
-           // val payload = buildPayloadAsync()
-           // callSubmitPOIDataAPI()
         callSubmitPOIDataMultiPart()
-            //repository.deleteDraft(poiId)
-
-       // }
     }
-
-
-    private fun now(): String =
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
-
 
     //  Add this for handling multiple gallery image selection
     fun addPhotoUris(fieldId: String, uris: List<Uri>) {
         val app = getApplication<Application>()
-        val list = photoUris.getOrPut(fieldId) { mutableListOf() }
-        val savedPaths = mutableListOf<String>()
+
+        // local new photos
+        val localList = photoUris.getOrPut(fieldId) { mutableListOf() }
 
         uris.forEach { uri ->
             try {
@@ -786,28 +647,47 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                 file.writeBytes(bytes)
 
                 val fileUri = Uri.fromFile(file)
-                list.add(fileUri)
-                savedPaths.add(file.absolutePath)
-
-            } catch (_: Exception) {}
+                localList.add(fileUri)
+            } catch (_: Exception) {
+            }
         }
 
-        // SAVE ONLY INTERNAL FILE PATHS
-        updateValue(fieldId, savedPaths)
+        // build merged list for UI: [server URLs] + [local file paths]
+        val merged = mutableListOf<String>()
+        photoUrls[fieldId]?.let { merged.addAll(it) }                      // URLs
+        merged.addAll(localList.map { it.toString() })                     // local files
+
+        updateValue(fieldId, merged)
         notifyFieldChanged(fieldId)
     }
 
 
-    //  (Optional) Allow user to remove a photo from the list
+    //   Allow user to remove a photo from the list
     fun removePhotoUri(fieldId: String, uri: Uri) {
-        val list = photoUris[fieldId] ?: mutableListOf()
-        list.remove(uri)
+        val uriStr = uri.toString()
+        val isRemote = uriStr.startsWith("http", ignoreCase = true)
 
-        photoUris[fieldId] = list
+        if (isRemote) {
+            // remove from server URL bucket
+            val urls = photoUrls[fieldId] ?: mutableListOf()
+            urls.remove(uriStr)
+            photoUrls[fieldId] = urls
+        } else {
+            // remove from local file bucket
+            val locals = photoUris[fieldId] ?: mutableListOf()
+            locals.remove(uri)
+            photoUris[fieldId] = locals
+        }
 
-        updateValue(fieldId, list.map { it.toString() })
+        // rebuild merged list for UI
+        val merged = mutableListOf<String>()
+        photoUrls[fieldId]?.let { merged.addAll(it) }
+        photoUris[fieldId]?.let { merged.addAll(it.map { u -> u.toString() }) }
+
+        updateValue(fieldId, merged)
         notifyFieldChanged(fieldId)
     }
+
 
     private val _fieldChangeLive = MutableLiveData<String>()
     val fieldChangeLive get() = _fieldChangeLive
@@ -842,37 +722,6 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             Base64.encodeToString(bytes, Base64.NO_WRAP)
         }
 
-    fun fetchAccurateLocation(latFieldId: String, lngFieldId: String) {
-        _locationFetchState.postValue(false)
-
-        val context = getApplication<Application>()
-
-        val request = CurrentLocationRequest.Builder()
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setMaxUpdateAgeMillis(0)
-            .build()
-
-        try {
-            fusedClient.getCurrentLocation(request, null)
-                .addOnSuccessListener { loc ->
-                    if (loc != null) {
-                        updateValue(latFieldId, loc.latitude)
-                        updateValue(lngFieldId, loc.longitude)
-                        _locationFetchState.postValue(true)
-                        notifyFieldChanged(latFieldId)
-                        notifyFieldChanged(lngFieldId)
-                    } else {
-                        _locationFetchState.postValue(false)
-                    }
-                }
-                .addOnFailureListener {
-                    _locationFetchState.postValue(false)
-                }
-        } catch (e: SecurityException) {
-            // permission not available
-            _locationFetchState.postValue(false)
-        }
-    }
     // ---------------------------------------------------------
 // ADD NOTIFICATION ENTRY (VM)
 // ---------------------------------------------------------
@@ -975,26 +824,8 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
 
     var submitPOIResponse =
         MutableLiveData<ResponseHandler<ResponseData<Int>?>>()
-    fun callSubmitPOIDataAPI() {
-        viewModelScope.launch {
-            try {
-                submitPOIResponse.value = ResponseHandler.Loading
 
-                // ⚡ Build payload (safe, suspending)
-                val payload: Map<String, Any> = buildPayloadAsync()
 
-                // ⚡ Call API
-                val response = repository.submitPOIData(payload)
-
-                submitPOIResponse.value = response
-
-            } catch (e: Exception) {
-                submitPOIResponse.value = ResponseHandler.OnFailed(500,
-                     message = e.message ?: "Something went wrong","500"
-                )
-            }
-        }
-    }
 
 
     fun deleteDraftAfterSubmit(poiId: String, onDone: () -> Unit) {
@@ -1008,38 +839,6 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
     }
 
 
-    private fun resizeIfRequiredAndConvert(uri: Uri): String {
-        val context = getApplication<Application>()
-        val oneMB = 1 * 1024 * 1024
-
-        // Step 1 — decode bounds only (no memory allocation)
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, options)
-        }
-
-        // Step 2 — calculate optimal sample size
-        options.inSampleSize = calculateInSampleSize(options, 1024, 1024) // max 1024px image
-        options.inJustDecodeBounds = false
-
-        // Step 3 — decode scaled bitmap
-        val bitmap = context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, options)
-        } ?: return ""
-
-        // Step 4 — compress until below 1MB
-        var quality = 90
-        var compressed: ByteArray
-
-        do {
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos)
-            compressed = baos.toByteArray()
-            quality -= 7
-        } while (compressed.size > oneMB && quality > 30)
-
-        return Base64.encodeToString(compressed, Base64.NO_WRAP)
-    }
 
 
     suspend fun buildMultipartPayload(): Pair<RequestBody, List<MultipartBody.Part>> =
@@ -1079,9 +878,16 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                     }
 
                     fieldType == "photo_list" -> {
+                        //  keep existing URLs (already uploaded images on server)
+                        val serverUrls = photoUrls[key] ?: mutableListOf()
+                        if (serverUrls.isNotEmpty()) {
+                            //  payload["uploadedPhotos"] = serverUrls
+
+                        }
                         var uriList = photoUris[key]
                         if (uriList.isNullOrEmpty()) {
-                            uriList = (v as? List<*>)?.map { Uri.parse(it.toString()) }?.toMutableList()
+                            uriList =
+                                (v as? List<*>)?.map { Uri.parse(it.toString()) }?.toMutableList()
                         }
 
                         uriList?.forEachIndexed { index, uri ->
@@ -1090,6 +896,7 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
                             galleryPhotos.add(part)
                         }
                     }
+
 
                     else -> payload[key] = cleanJsonValue(v)
                 }
@@ -1101,7 +908,7 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             payload["poiName"] = selectedPOIData.poiName
             payload["PoiId"] = selectedPOIData.poiId.toString()
             payload["AgentId"] = selectedPOIData.agentId
-
+            payload["isRevision"] = if (_isRevisionState.value == true) "Y" else "N"
             val requestBody =
                 JSONObject(payload as Map<*, *>)
                     .toString()
@@ -1115,8 +922,13 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             submitPOIResponse.value = ResponseHandler.Loading
             try {
                 val (jsonPart, fileParts) = buildMultipartPayload()
-                val response = repository.submitPOIData(jsonPart, fileParts)
-                submitPOIResponse.value = response
+                if (_isRevisionState.value == true) {
+                    val response = repository.updatePOIData(jsonPart, fileParts)
+                    submitPOIResponse.value = response
+                } else {
+                    val response = repository.submitPOIData(jsonPart, fileParts)
+                    submitPOIResponse.value = response
+                }
             } catch (e: Exception) {
                 submitPOIResponse.value = ResponseHandler.OnFailed(
                     500, e.message ?: "Something went wrong", "500"
@@ -1171,7 +983,11 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
         return byteArray
     }
 
-    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+    private fun calculateInSampleSize(
+        options: BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int
+    ): Int {
         val (height, width) = options.run { outHeight to outWidth }
         var inSampleSize = 1
 
@@ -1186,6 +1002,23 @@ fun loadSchemaFromString(jsonStr: FormSchema?) {
             }
         }
         return inSampleSize
+    }
+
+    fun callDeletePhotoAPI(imgId: String, agentId: String, poiId: String) {
+
+        if (imgId.contains("|")) {
+            val (url, idStr) = imgId.split("|")
+            val imgId = idStr.toInt()
+
+            // convert imgId -> List<Int>
+            val deleteList = listOf(imgId)
+            val request =
+                DeletePhotoRequest(poiId, agentId, deleteList)
+            viewModelScope.launch(Utils.coroutineContext) {
+                deleteGalleryPhoto.value = ResponseHandler.Loading
+                deleteGalleryPhoto.value = repository.deleteGalleryPhoto(request)
+            }
+        }
     }
 
 

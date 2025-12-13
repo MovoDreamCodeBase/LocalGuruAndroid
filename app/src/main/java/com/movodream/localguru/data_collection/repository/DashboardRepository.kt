@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.core.constants.AppConstants
 import com.data.remote.model.AgentTaskResponse
+import com.data.remote.model.RevisionDataResponse
 import com.google.firebase.database.FirebaseDatabase
 import com.movodream.localguru.data_collection.model.FormSchema
 import com.movodream.localguru.data_collection.model.Parser
@@ -12,6 +13,7 @@ import com.network.client.ApiClient
 import com.network.client.BaseRepository
 import com.network.client.ResponseHandler
 import com.network.model.ResponseData
+import com.network.model.ResponseListData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -63,6 +65,20 @@ class DashboardRepository  : BaseRepository(){
             return@withContext makeAPICallTemp {
                 apiInterface.getAssignedPOIToAgent(
                     agentId
+                )
+            }
+
+        }
+    }
+
+    suspend fun revisionData(
+        agentId: String,poiId : String
+    ): ResponseHandler<ResponseListData<RevisionDataResponse>?> {
+
+        return withContext(Dispatchers.Default) {
+            return@withContext makeAPICallForListTemp {
+                apiInterface.getRevisionData(
+                    agentId, poiId
                 )
             }
 

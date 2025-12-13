@@ -2,22 +2,31 @@ package com.movodream.localguru.data_collection.ui.activities
 
 import android.Manifest
 import android.app.Activity
+import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.AppCompatImageButton
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.core.base.BaseActivity
 import com.core.customviews.CustomDialogBuilder
+import com.core.customviews.ZoomImageView
 import com.core.utils.DebugLog
 import com.core.utils.PermissionUtils
 import com.core.utils.Utils
@@ -30,11 +39,17 @@ import com.movodream.localguru.data_collection.ui.adapter.DynamicFormAdapter
 import com.movodream.localguru.data_collection.ui.adapter.TabAdapter
 import com.network.client.ResponseHandler
 import com.network.model.ResponseData
+import org.json.JSONObject
+import java.io.File
 import kotlin.collections.indexOfFirst
+import kotlin.text.contains
+import kotlin.text.substringBefore
 
 
 class DynamicFormActivity : BaseActivity() {
 
+    private lateinit var removeUri: Uri
+    private lateinit var removePhotoFieldId: String
     private lateinit var vm: FormViewModel
     private lateinit var tabRecycler: RecyclerView
     private lateinit var tabAdapter: TabAdapter
@@ -76,6 +91,7 @@ class DynamicFormActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dynamic_form)
+
         val schema : FormSchema? = intent.getParcelableExtra("KEY_SCHEMA") as FormSchema?
         selectedPOI =
             intent.getParcelableExtra("KEY_POI") as TaskItem?
@@ -84,6 +100,8 @@ class DynamicFormActivity : BaseActivity() {
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         )[FormViewModel::class.java]
+
+        vm._isRevisionState.value = intent.getBooleanExtra("KEY_IS_REVISION",false)
         permissionUtils = PermissionUtils(this)
         titleTv = findViewById(R.id.title)
         progressTv = findViewById(R.id.progress_text)
@@ -142,7 +160,21 @@ class DynamicFormActivity : BaseActivity() {
                 requestLocationPermission(latId, lngId)
             },
             onFieldChanged = { id, value -> vm.updateValue(id, value) },
-            onRemovePhoto = { fieldId, uri -> vm.removePhotoUri(fieldId, uri) },
+            onRemovePhoto = { fieldId, uri ->
+                var urlString  = uri.toString()
+
+                if(urlString.contains("|")){
+                    removePhotoFieldId = fieldId
+                    removeUri = uri
+                    callDeletePhotoAPI()
+                }else{
+                    vm.removePhotoUri(fieldId, uri)
+                }
+
+
+
+
+                            },
             onAddNotification = onAdd@{
                 val errors = vm.addNotification()
 
@@ -155,10 +187,16 @@ class DynamicFormActivity : BaseActivity() {
             },onRemoveNotification = { index ->
                 vm.removeNotification(index)
                 Toast.makeText(this, "Notification removed", Toast.LENGTH_SHORT).show()
+            }, onPreviewPhotos = { fieldId, uris ->
+                showPhotoPreviewDialog(fieldId, uris)  // final call
             }
         )
         adapter.setHasStableIds(true)
         recycler.adapter = adapter
+
+
+
+
 
         // Observe schema
         vm.schemaLive.observe(this) { schema ->
@@ -167,22 +205,13 @@ class DynamicFormActivity : BaseActivity() {
                 progressTv.text = "${selectedPOI!!.progress ?: 0}%"
                 categoryTV.text = it.tags[0]
                 tabAdapter.submitTabs(it.tabs)
-               // it.tabs.firstOrNull()?.let { tab -> showTab(tab.id) }
             }
         }
 
-//        vm.fieldChangeLive.observe(this) { fieldId ->
-//            if (lastShownTabId == null) return@observe
-//            val pos = adapterPositionForField(fieldId)
-//            if (pos >= 0) adapter.notifyItemChanged(pos)
-//        }
         vm.fieldChangeLive.observe(this) { fieldId ->
-           // adapter.updateValue(fieldId, vm.valuesLive.value?.get(fieldId))
             refreshCurrentTab()
         }
-//        vm.fieldChangeLive.observe(this) {
-//            refreshCurrentTab()
-//        }
+
 
         // Save draft + move to next tab
         saveBtn.setOnClickListener {
@@ -205,11 +234,8 @@ class DynamicFormActivity : BaseActivity() {
                 lastShownTabId = nextTab.id
                 tabAdapter.highlightTab(nextTab.id)
                 showTab(nextTab.id)
-//                Toast.makeText(this, "Draft saved. Moving to ${nextTab.title}", Toast.LENGTH_SHORT)
-//                    .show()
             } else {
-               // val payload = vm.buildPayload()
-               // vm.submit(""+poiId)
+
 
             }
         }
@@ -223,48 +249,38 @@ class DynamicFormActivity : BaseActivity() {
                 Toast.makeText(this, allErrors.values.first(), Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-           // val payload = vm.buildPayload()
             vm.submit(""+poiId,selectedPOI)
-//            Toast.makeText(this, "Data Saved Successfully...", Toast.LENGTH_SHORT)
-//                .show()
-//            finish()
-        }
 
-        // Load schema from backend mock
-//        var s = "";
-//        if(intent.getIntExtra("KEY_ID",1)==2){
-//           s  = MockNetwork.fetchSchemaString2()
-//        }else{
-//           s   = MockNetwork.fetchSchemaString()
-//        }
+        }
 
 
         vm.loadSchemaFromString(schema)
 
-        // STEP 2 → Load draft (async) and restore values
-//        vm.loadDraft(""+poiId) {
-//
-//            // STEP 3 → After draft loaded, now build UI
-//            val loadedSchema = vm.schemaLive.value ?: return@loadDraft
-//
-//            titleTv.text = loadedSchema.title
-//            tabAdapter.submitTabs(loadedSchema.tabs)
-//
-//            // Open first tab
-//            loadedSchema.tabs.firstOrNull()?.let { showTab(it.id) }
-//            if (schema != null) {
-//                adapter.submitFields(schema.tabs.first().fields, vm.valuesLive.value ?: emptyMap())
-//            }
-//        }
         vm.loadDraft("" + poiId) {
+
+            //  Auto-fill siteName from POI list into form
+            val poiName = selectedPOI?.poiName?.trim().orEmpty()
+            val agentId = selectedPOI?.agentId?.trim().orEmpty()
+
+            if (poiName.isNotBlank()) {
+                vm.updateValue("siteName", poiName)     // set value in state
+                vm.notifyFieldChanged("siteName")       // refresh adapter
+            }
+            if (agentId.isNotBlank()) {
+                vm.updateValue("collectorId", agentId)     // set value in state
+                vm.notifyFieldChanged("collectorId")       // refresh adapter
+            }
             val loadedSchema = vm.schemaLive.value ?: return@loadDraft
             val firstTab = loadedSchema.tabs.first()
             showTab(firstTab.id)   // spinner restores correctly
         }
 
-
-
         setObserver()
+    }
+
+    private fun callDeletePhotoAPI() {
+        var urlString  = removeUri.toString()
+         vm.callDeletePhotoAPI(urlString, selectedPOI!!.agentId ,""+poiId)
     }
 
     private fun setObserver() {
@@ -313,8 +329,13 @@ class DynamicFormActivity : BaseActivity() {
                             Utils.hideProgressDialog()
                             CustomDialogBuilder(this)
                                 .setTitle("Successful")
-                                .setMessage("Data Submitted Successfully"
-                                )
+                                .setMessage(
+                                    if (vm._isRevisionState.value == true)
+                                        "Data Updated Successfully"
+                                    else
+                                        "Data Submitted Successfully"
+                                    )
+
                                 .setPositiveButton("OK") {
 
 
@@ -328,6 +349,60 @@ class DynamicFormActivity : BaseActivity() {
                             .show()
 
                         }
+
+
+                        Utils.hideProgressDialog()
+
+                    }
+                }
+            })
+
+        vm.deleteGalleryPhoto.observe(
+            this,
+            androidx.lifecycle.Observer { state ->
+                if (state == null) {
+                    return@Observer
+                }
+
+                when (state) {
+
+                    is ResponseHandler.Loading -> {
+                        Utils.showProgressDialog(this)
+                    }
+                    is ResponseHandler.OnFailed -> {
+                        Utils.hideProgressDialog()
+
+                        if (state.code == 401) {
+                            //  Utils.showUnAuthAlertDialog(this)
+                        } else {
+                            state.message.let { m ->
+                                DebugLog.e("Config Api Error Response : $m")
+
+
+                                CustomDialogBuilder(this)
+                                    .setTitle("Error")
+                                    .setMessage(m
+                                    )
+                                    .setPositiveButton("OK") {
+
+
+                                    }
+                            }
+                                .setCancelable(false)
+                                .show()
+                        }
+                    }
+
+
+                    is ResponseHandler.OnSuccessResponse<ResponseData<Int>?> -> {
+
+                        state.response?.let {
+                            Utils.hideProgressDialog()
+                            vm.removePhotoUri(removePhotoFieldId,removeUri)
+
+                        }
+
+
 
 
                         Utils.hideProgressDialog()
@@ -363,13 +438,13 @@ class DynamicFormActivity : BaseActivity() {
     private fun requestGalleryAndPick(fieldId: String) {
         currentPhotoFieldId = fieldId
 
-        // ✅ Android 13 (API 33) and above: no need for manual permission with GetMultipleContents()
+        //  Android 13 (API 33) and above: no need for manual permission with GetMultipleContents()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pickImages.launch("image/*")
             return
         }
 
-        // ✅ For Android 12 and below, we still need READ_EXTERNAL_STORAGE
+        // For Android 12 and below, we still need READ_EXTERNAL_STORAGE
         val perm = Manifest.permission.READ_EXTERNAL_STORAGE
         if (ActivityCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(perm), 3002)
@@ -468,8 +543,6 @@ class DynamicFormActivity : BaseActivity() {
     }
 
     private fun fetchLocation(){
-//        Toast.makeText(this@DynamicFormActivity,"Fetching your location, please wait…", Toast.LENGTH_LONG).show()
-//        vm.fetchAccurateLocation(pendingLatField, pendingLngField)
         mapLauncher.launch(Intent(this, MapPickerActivity::class.java))
     }
 
@@ -479,13 +552,123 @@ class DynamicFormActivity : BaseActivity() {
                 val lat = result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
                 val lng = result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
 
+                val rawLocation = result.data?.getStringExtra("locationInfo").orEmpty().trim()
+                val physicalAddress = result.data?.getStringExtra("address").orEmpty().trim()
+
+                Log.d("ADDRESS : ", rawLocation)
+                Log.d("physicalAddress : ", physicalAddress)
+                val parts = if (rawLocation.isNotEmpty()) {
+                    rawLocation.split("|").map { it.trim() }
+                } else {
+                    emptyList()
+                }
+
+                // Ensure always 3 values
+                val city    = parts.getOrNull(0).orEmpty()
+                val state   = parts.getOrNull(1).orEmpty()
+                val country = parts.getOrNull(2).orEmpty()
+
+
                 vm.updateValue("latitude", lat)
                 vm.updateValue("longitude", lng)
-
+                vm.updateValue("localityTown", city)
+                vm.updateValue("regionState", state)
+                vm.updateValue("country", country)
+                vm.updateValue("physicalAddress", physicalAddress)
+                if (lat != 0.0 && lng != 0.0) {
+                    vm.updateValue("pinVerifiedViaGps", "Y")
+                    vm.notifyFieldChanged("pinVerifiedViaGps")
+                }
                 vm.notifyFieldChanged("latitude")
                 vm.notifyFieldChanged("longitude")
+                vm.notifyFieldChanged("localityTown")
+                vm.notifyFieldChanged("regionState")
+                vm.notifyFieldChanged("country")
+                vm.notifyFieldChanged("physicalAddress")
             }
         }
+
+    private fun showPhotoPreviewDialog(fieldId: String, uris: MutableList<Uri>)
+    {
+    // Always work on a mutable reference to actual list
+        val list = uris.toMutableList()
+
+        if (list.isEmpty()) return
+
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        dialog.setContentView(R.layout.dialog_photo_preview)
+
+        val zoomImg = dialog.findViewById<AppCompatImageView>(R.id.zoomImg)
+        val tvFile = dialog.findViewById<AppCompatTextView>(R.id.tvFileName)
+        val tvCount = dialog.findViewById<AppCompatTextView>(R.id.tvCount)
+
+        val btnPrev = dialog.findViewById<AppCompatImageButton>(R.id.btnPrev)
+        val btnNext = dialog.findViewById<AppCompatImageButton>(R.id.btnNext)
+        val btnDelete = dialog.findViewById<AppCompatImageButton>(R.id.btnDelete)
+
+        var index = 0
+
+        fun refreshUI() {
+            if (list.isEmpty()) { dialog.dismiss(); return }
+
+            val raw = list[index].toString()
+
+// 🔥 Extract pure URL if stored as url|id
+            val url = if (raw.contains("|")) raw.substringBefore("|") else raw
+
+            val model: Any = when {
+                url.startsWith("content://") -> Uri.parse(url)
+                url.startsWith("file://") -> File(Uri.parse(url).path!!)
+                url.startsWith("http") -> url // remote stored url
+                else -> File(url) // fallback
+            }
+
+            Glide.with(zoomImg.context)
+                .load(model)
+                //.placeholder(R.drawable.ic_cloud_upload)
+                .into(zoomImg)
+
+            val fileName = url.substringAfterLast('/').substringBefore('?')
+            tvFile.text = fileName
+
+            tvCount.text = "${index + 1}/${list.size}"
+
+            btnPrev.visibility = if (index == 0) View.INVISIBLE else View.VISIBLE
+            btnNext.visibility = if (index == list.lastIndex) View.INVISIBLE else View.VISIBLE
+        }
+
+
+        refreshUI()
+
+        btnPrev.setOnClickListener {
+            if (index > 0) index--
+            refreshUI()
+        }
+
+        btnNext.setOnClickListener {
+            if (index < list.lastIndex) index++
+            refreshUI()
+        }
+
+        btnDelete.setOnClickListener {
+            val removedUri = uris[index]
+
+            // Remove from ViewModel source
+            vm.removePhotoUri(fieldId, removedUri)
+
+            // Remove from dialog list
+            uris.removeAt(index)   // Now works ✔
+
+            vm.notifyFieldChanged(fieldId)
+
+            Toast.makeText(this, "Photo removed", Toast.LENGTH_SHORT).show()
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
 
 
 

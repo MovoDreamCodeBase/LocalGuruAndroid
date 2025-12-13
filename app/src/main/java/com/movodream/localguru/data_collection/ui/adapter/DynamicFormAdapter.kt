@@ -19,6 +19,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.core.utils.SimpleTextWatcher
 import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.FieldSchema
+import java.io.File
+import kotlin.text.contains
+import kotlin.text.substringBefore
 
 
 class DynamicFormAdapter(
@@ -28,7 +31,8 @@ class DynamicFormAdapter(
     private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
     private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit,
     private val onAddNotification: () -> Unit,
-    private val onRemoveNotification: (index: Int) -> Unit
+    private val onRemoveNotification: (index: Int) -> Unit,
+    private val onPreviewPhotos: (fieldId: String, uris: MutableList<Uri>) -> Unit
 ) : RecyclerView.Adapter<DynamicFormAdapter.FieldVH>() {
 
     private var fields: List<FieldSchema> = emptyList()
@@ -52,10 +56,11 @@ class DynamicFormAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FieldVH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_field_container, parent, false)
-        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto,onAddNotification,onRemoveNotification)
+        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto,onAddNotification,onRemoveNotification,onPreviewPhotos)
     }
 
     override fun onBindViewHolder(holder: FieldVH, position: Int) {
+        holder.allValues = values
         holder.bind(fields[position], values[fields[position].id], errors[fields[position].id])
     }
 
@@ -69,8 +74,11 @@ class DynamicFormAdapter(
         private val onFieldChanged: (fieldId: String, value: Any?) -> Unit,
         private val onRemovePhoto: (fieldId: String, uri: Uri) -> Unit,
         private val onAddNotification: () -> Unit,
-        private val onRemoveNotification: (index: Int) -> Unit
+        private val onRemoveNotification: (index: Int) -> Unit,
+        private val onPreviewPhotos: (fieldId: String, uris: MutableList<Uri>) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
+         var allValues: Map<String, Any?> = emptyMap()
+
         private val label = itemView.findViewById<TextView>(R.id.label)
         private val host = itemView.findViewById<FrameLayout>(R.id.control_host)
         private val instructions = itemView.findViewById<TextView>(R.id.instructions)
@@ -78,6 +86,13 @@ class DynamicFormAdapter(
 
         // store active watcher to remove before re-adding
         private var activeWatcher: SimpleTextWatcher? = null
+
+        private fun makeReadOnly(view: EditText) {
+            view.isEnabled = false
+            view.isFocusable = false
+            view.isFocusableInTouchMode = false
+          //  view.setTextColor(Color.GRAY)
+        }
 
         fun bind(field: FieldSchema, value: Any?, error: String?) {
             if (field.required) {
@@ -100,13 +115,20 @@ class DynamicFormAdapter(
             label.typeface = ResourcesCompat.getFont(itemView.context, com.core.R.font.dm_sans_bold)
             instructions.visibility = if (!field.instructions.isNullOrEmpty()) { instructions.text = field.instructions; View.GONE } else View.GONE
             errorTv.visibility = if (!error.isNullOrEmpty()) { errorTv.text = error; View.VISIBLE } else View.GONE
+            val nonEditableLocationFields = setOf(
+                "latitude", "longitude", "localityTown", "regionState", "country"
+            )
 
+            val lat = allValues["latitude"]?.toString()?.toDoubleOrNull() ?: 0.0
+            val lng = allValues["longitude"]?.toString()?.toDoubleOrNull() ?: 0.0
+
+            val shouldLockLocation = lat != 0.0 && lng != 0.0
             host.removeAllViews()
             activeWatcher = null
 
             when (field.type) {
                 "text" -> {
-                    val et = EditText(itemView.context).apply {
+                    var et = EditText(itemView.context).apply {
                         background = context.getDrawable(R.drawable.bg_input_bordered)
                         setPadding(24, 36, 24, 36)
                         textSize = 15f
@@ -116,7 +138,22 @@ class DynamicFormAdapter(
                         typeface = ResourcesCompat.getFont(itemView.context, com.core.R.font.dm_sans_medium)
                         setTextColor(context.getColor(android.R.color.black))
                         setHintTextColor(Color.parseColor("#9E9E9E"))
+
+
                     }
+                    // 🔒 Make read-only only when data exists
+                    if (field.id == "localityTown" ||
+                        field.id == "regionState" ||
+                        field.id == "country"||field.id == "siteName"||field.id == "collectorId") {
+
+                        val currentVal = (value as? String)?.trim().orEmpty()
+
+                        if (currentVal.isNotEmpty()) {
+                            makeReadOnly(et)
+                        }
+                    }
+
+
 
                     et.addTextChangedListener(SimpleTextWatcher { onFieldChanged(field.id, it) })
                     activeWatcher = null
@@ -210,7 +247,14 @@ class DynamicFormAdapter(
 
                         container.addView(btn)
                     }
-
+// ---- Make LAT/LNG read-only when map returns values ----
+                    if (shouldLockLocation && field.id in nonEditableLocationFields) {
+                        et.isEnabled = false
+                        et.isFocusable = false
+                        et.isFocusableInTouchMode = false
+                        et.isClickable = false
+                       // et.alpha = 0.6f   // Optional: visually show disabled state
+                    }
                     host.addView(container)
                 }
 
@@ -407,6 +451,7 @@ class DynamicFormAdapter(
                         setPadding(0, 8, 0, 0)
                     }
 
+
                     uploadBox.addView(icon)
                     uploadBox.addView(title)
                     uploadBox.addView(subtitle)
@@ -421,13 +466,12 @@ class DynamicFormAdapter(
                     vertical.addView(photoList)
 
                     // Load existing photo URIs
-                    val uris = (value as? List<*>)?.mapNotNull {
-                        when (it) {
-                            is Uri -> it
-                            is String -> Uri.parse(it)
-                            else -> null
-                        }
-                    }?.toMutableList() ?: mutableListOf()
+                    // Load existing values (could be server URLs or saved draft strings)
+                    val serverList = (value as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+
+// Convert to Uri for UI
+                    val uris = serverList.map { Uri.parse(it) }.toMutableList()
+
 
                     fun refreshPhotoList() {
                         photoList.removeAllViews()
@@ -444,8 +488,11 @@ class DynamicFormAdapter(
                                 layoutParams = LinearLayout.LayoutParams(40, 40)
                             }
 
+                            val raw = uri.toString()
+                            val url = if (raw.contains("|")) raw.substringBefore("|") else raw
+                            val fileN = url.substringAfterLast('/').substringBefore('?')
                             val fileName = TextView(ctx).apply {
-                                text = "photo${index + 1}.jpg"
+                                text = fileN
                                 setTextColor(Color.BLACK)
                                 textSize = 14f
                                 typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
@@ -459,13 +506,20 @@ class DynamicFormAdapter(
 
 
                                 setOnClickListener {
-                                    // call ViewModel via adapter callback so the source-of-truth is updated
-                                    onRemovePhoto(field.id, uri)
 
-                                    // update the local UI list and values so UI is immediately consistent
-                                    uris.remove(uri)
-                                    onFieldChanged(field.id, uris.map { it.toString() })
-                                    refreshPhotoList()
+                                        // 1️ Remove from source-of-truth (ViewModel) via callback
+                                        onRemovePhoto(field.id, uri)
+
+                                        // 2️ Update UI list
+                                        uris.removeAt(index)
+
+                                        // 3️ Push updated values back
+                                        onFieldChanged(field.id, uris.map { it.toString() })
+
+                                        // 4️ Refresh UI
+                                        refreshPhotoList()
+
+
                                 }
 
                             }
@@ -484,41 +538,131 @@ class DynamicFormAdapter(
                         onPickImages(field.id)
                     }
 
+                    //  ADDED — "SHOW PHOTOS" BUTTON
+                    val showBtn = TextView(ctx).apply {
+                        text = "Show Photos"
+                        textSize = 14f
+                        setTextColor(Color.WHITE)
+                        background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                        setPadding(24, 12, 24, 12)
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+                        visibility = if (uris.isEmpty()) View.GONE else View.VISIBLE
+                        setOnClickListener {
+                            // ViewModel holds uris, so just show dialog
+                            onPreviewPhotos(field.id, uris)  // ✅ pass uris
+                        }
+                        val params = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        params.topMargin = 12.dpToPx(ctx)
+                        layoutParams = params
+                    }
+
+                    vertical.addView(showBtn)
+
                     host.addView(vertical)
                 }
 
+//                "rating" -> {
+//                    val ctx = itemView.context
+//                    val maxStars = field.max?.toInt() ?: 5
+//                    var currentRating = (value as? Number)?.toInt() ?: 0
+//
+//                    // container
+//                    val container = LinearLayout(ctx).apply {
+//                        orientation = LinearLayout.HORIZONTAL
+//                        gravity = Gravity.CENTER_VERTICAL
+//                        setPadding(16.dpToPx(ctx), 8.dpToPx(ctx), 16.dpToPx(ctx), 8.dpToPx(ctx))
+//                        layoutParams = LinearLayout.LayoutParams(
+//                            LinearLayout.LayoutParams.MATCH_PARENT,
+//                            LinearLayout.LayoutParams.WRAP_CONTENT
+//                        )
+//                    }
+//
+//                    // stars container
+//                    val starsLayout = LinearLayout(ctx).apply {
+//                        orientation = LinearLayout.HORIZONTAL
+//                        gravity = Gravity.CENTER_VERTICAL
+//                    }
+//
+//                    // rating text
+//                    val ratingText = TextView(ctx).apply {
+//                        text = "$currentRating / $maxStars"
+//                        setPadding(12.dpToPx(ctx), 0, 0, 0)
+//                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+//                        setTextColor(Color.BLACK)
+//                        textSize = 14f
+//                    }
+//
+//                    // function to update stars UI
+//                    fun refreshStars() {
+//                        for (i in 0 until maxStars) {
+//                            val starView = starsLayout.getChildAt(i) as ImageView
+//                            val drawableId =
+//                                if (i < currentRating) R.drawable.ic_star_filled else R.drawable.ic_star_outline
+//                            starView.setImageDrawable(ContextCompat.getDrawable(ctx, drawableId))
+//                        }
+//                        ratingText.text = "$currentRating / $maxStars"
+//                    }
+//
+//                    // create stars
+//                    repeat(maxStars) { index ->
+//                        val star = ImageView(ctx).apply {
+//                            val size = 32.dpToPx(ctx)
+//                            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+//                                marginEnd = 6.dpToPx(ctx)
+//                            }
+//                            setImageDrawable(
+//                                ContextCompat.getDrawable(
+//                                    ctx,
+//                                    if (index < currentRating) R.drawable.ic_star_filled else R.drawable.ic_star_outline
+//                                )
+//                            )
+//                            setOnClickListener {
+//                                currentRating = index + 1
+//                                onFieldChanged(field.id, currentRating)
+//                                refreshStars()
+//                            }
+//                        }
+//                        starsLayout.addView(star)
+//                    }
+//
+//                    refreshStars()
+//
+//                    container.addView(starsLayout)
+//                    container.addView(ratingText)
+//                    host.addView(container)
+//                }
                 "rating" -> {
                     val ctx = itemView.context
                     val maxStars = field.max?.toInt() ?: 5
+
                     var currentRating = (value as? Number)?.toInt() ?: 0
 
-                    // container
                     val container = LinearLayout(ctx).apply {
-                        orientation = LinearLayout.HORIZONTAL
+                        orientation = LinearLayout.VERTICAL
                         gravity = Gravity.CENTER_VERTICAL
-                        setPadding(16.dpToPx(ctx), 8.dpToPx(ctx), 16.dpToPx(ctx), 8.dpToPx(ctx))
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
+                        setPadding(16.dpToPx(ctx), 1.dpToPx(ctx), 16.dpToPx(ctx), 1.dpToPx(ctx))
                     }
 
-                    // stars container
-                    val starsLayout = LinearLayout(ctx).apply {
-                        orientation = LinearLayout.HORIZONTAL
-                        gravity = Gravity.CENTER_VERTICAL
+                    val starsLayout = com.google.android.flexbox.FlexboxLayout(ctx).apply {
+                        flexWrap = com.google.android.flexbox.FlexWrap.WRAP
+                        flexDirection = com.google.android.flexbox.FlexDirection.ROW
+                        justifyContent = com.google.android.flexbox.JustifyContent.FLEX_START
                     }
 
-                    // rating text
+                    val starSize = if (maxStars > 5) 24.dpToPx(ctx) else 32.dpToPx(ctx)
+                    val starMargin = if (maxStars > 5) 4.dpToPx(ctx) else 6.dpToPx(ctx)
+
                     val ratingText = TextView(ctx).apply {
                         text = "$currentRating / $maxStars"
-                        setPadding(12.dpToPx(ctx), 0, 0, 0)
+                        setPadding(8.dpToPx(ctx), 0, 0, 0)
                         typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
                         setTextColor(Color.BLACK)
                         textSize = 14f
                     }
 
-                    // function to update stars UI
                     fun refreshStars() {
                         for (i in 0 until maxStars) {
                             val starView = starsLayout.getChildAt(i) as ImageView
@@ -529,12 +673,11 @@ class DynamicFormAdapter(
                         ratingText.text = "$currentRating / $maxStars"
                     }
 
-                    // create stars
                     repeat(maxStars) { index ->
                         val star = ImageView(ctx).apply {
-                            val size = 32.dpToPx(ctx)
-                            layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                                marginEnd = 6.dpToPx(ctx)
+                            layoutParams = LinearLayout.LayoutParams(starSize, starSize).apply {
+                                marginEnd = starMargin
+                                bottomMargin = starMargin
                             }
                             setImageDrawable(
                                 ContextCompat.getDrawable(
@@ -543,7 +686,13 @@ class DynamicFormAdapter(
                                 )
                             )
                             setOnClickListener {
-                                currentRating = index + 1
+                                currentRating = when {
+                                    // Allow reset ONLY when tapping first star again
+                                    index == 0 && currentRating == 1 -> 0
+
+                                    // Otherwise normal selection
+                                    else -> index + 1
+                                }
                                 onFieldChanged(field.id, currentRating)
                                 refreshStars()
                             }

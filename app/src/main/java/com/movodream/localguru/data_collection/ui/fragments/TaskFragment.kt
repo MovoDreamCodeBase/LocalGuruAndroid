@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
+import com.core.constants.AppConstants
 import com.core.utils.Utils
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.DashboardViewModel
@@ -72,10 +73,14 @@ class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
 
                     Log.d("TaskFragment", "TASK SUCCESS fired once")
 
-                    val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
-                    intent.putExtra("KEY_SCHEMA", state.data)
-                    intent.putExtra("KEY_POI", selectedPOI)
-                    startActivityForResult(intent,101)
+                    if(selectedPOI!!.revisionRequired){
+                        (activity as? DashboardActivity)?.callRevisionDataAPI(state.data,selectedPOI)
+                    }else{
+                        val intent = Intent(requireActivity(), DynamicFormActivity::class.java)
+                        intent.putExtra("KEY_SCHEMA", state.data)
+                        intent.putExtra("KEY_POI", selectedPOI)
+                        startActivityForResult(intent,101)
+                    }
 
                     viewModel.resetCategoryState()
                     viewModel.clearCaller()
@@ -137,11 +142,20 @@ class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
 
     override fun onActionButton1Clicked(option: TaskItem) {
         selectedPOI = option
-        viewModel.setCaller("TASK")
-        viewModel.loadCategory(option.categoryId)
+        if(option.taskStatus == AppConstants.TAB_COMPLETED){
+            (activity as? DashboardActivity)?.callPOIDetailsAPI(selectedPOI!!,false)
+        }else {
+            viewModel.setCaller("TASK")
+            viewModel.loadCategory(option.categoryId)
+        }
     }
 
-    override fun onActionButton2Clicked(option: TaskItem) {}
+    override fun onActionButton2Clicked(option: TaskItem) {
+        selectedPOI = option
+        if(option.taskStatus == AppConstants.TAB_COMPLETED){
+            (activity as? DashboardActivity)?.callPOIDetailsAPI(selectedPOI!!,true)
+        }
+    }
 
     override fun onActionCallClicked(option: TaskItem) {
         val intent = Intent(Intent.ACTION_DIAL)

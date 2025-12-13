@@ -15,8 +15,8 @@ android {
         applicationId = "com.movodream.localguru"
         minSdk = 24
         targetSdk = 36
-        versionCode = 114
-        versionName = "1.1.4"
+        versionCode = 116
+        versionName = "1.1.6"
 
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -58,6 +58,7 @@ dependencies {
     implementation (project(":core"))
     implementation(project(":data"))
     implementation(project(":network"))
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
 
 }
