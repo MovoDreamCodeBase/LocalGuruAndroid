@@ -16,4 +16,6 @@ object PrefKey {
     const val LATITUDE = "lat"
     const val LONGITUDE = "longs"
 
+    const val LOGIN_DATE = "login_date"
+
 }

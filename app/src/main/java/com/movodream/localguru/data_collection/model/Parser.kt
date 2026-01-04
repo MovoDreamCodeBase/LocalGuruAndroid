@@ -45,7 +45,7 @@ object Parser {
         if (optArr != null) {
             for (i in 0 until optArr.length()) {
                 val o = optArr.optJSONObject(i) ?: continue
-                opts.add(Option(o.optString("value"), o.optString("label")))
+                opts.add(Option(o.optString("value"), o.optString("label"),o.optInt("id")))
             }
         }
         return FieldSchema(
@@ -67,7 +67,9 @@ object Parser {
             regex = f.optString("regex", null),
             captureRequired = f.optBooleanOrNull("capture_required"),
             instructions = f.optString("instructions", null),
-                    errorMessage = f.optString("errorMessage", null)
+                    errorMessage = f.optString("errorMessage", null),
+                    helperText = f.optString("helperText", null),
+            addButtonLabel = f.optString("addButtonLabel", null)
         )
     }
 

@@ -3,6 +3,7 @@ package com.network.client
 import android.accounts.NetworkErrorException
 import com.core.utils.DebugLog
 import com.google.gson.Gson
+import com.network.model.BulkSubPoiItem
 import com.network.model.ErrorWrapper
 import com.network.model.HttpErrorCode
 import com.network.model.ResponseData
@@ -419,6 +420,53 @@ open class BaseRepository {
         }
     }
 
+
+    suspend fun makeBulkSubPoiAPICall(
+        call: suspend () -> Response<List<BulkSubPoiItem>>
+    ): ResponseHandler<List<BulkSubPoiItem>> {
+
+        return try {
+            val response = call.invoke()
+
+            if (!response.isSuccessful) {
+                return ResponseHandler.OnFailed(
+                    response.code(),
+                    "HTTP error ${response.code()}",
+                    response.code().toString()
+                )
+            }
+
+            val body = response.body()
+
+            if (body.isNullOrEmpty()) {
+                return ResponseHandler.OnFailed(
+                    HttpErrorCode.EMPTY_RESPONSE.code,
+                    "Empty response",
+                    HttpErrorCode.EMPTY_RESPONSE.code.toString()
+                )
+            }
+
+            val failedItem = body.firstOrNull { it.success != true }
+
+            if (failedItem == null) {
+                ResponseHandler.OnSuccessResponse(body)
+            } else {
+                ResponseHandler.OnFailed(
+                    HttpErrorCode.ERROR_RESPONSE.code,
+                    failedItem.message ?: "One or more Sub POIs failed",
+                    HttpErrorCode.ERROR_RESPONSE.code.toString()
+                )
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ResponseHandler.OnFailed(
+                HttpErrorCode.NOT_DEFINED.code,
+                e.message ?: "Unknown error",
+                HttpErrorCode.NOT_DEFINED.code.toString()
+            )
+        }
+    }
 
     suspend fun <T : Any> makeAPICallTemp(call: suspend () -> Response<ResponseData<T>>): ResponseHandler<ResponseData<T>?> {
         try {

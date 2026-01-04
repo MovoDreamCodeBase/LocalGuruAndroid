@@ -1,6 +1,7 @@
 package com.network.client
 
 import android.util.Log
+import com.core.constants.AppConstants
 
 
 import com.core.utils.DebugLog
@@ -99,12 +100,14 @@ class ApiClient {
                     .build()
 
 
-                val logging = HttpLoggingInterceptor()
-                logging.level = HttpLoggingInterceptor.Level.HEADERS
-                logging.level = HttpLoggingInterceptor.Level.BODY
+                if (AppConstants.LOGGER_ENABLED) {
+                    val logging = HttpLoggingInterceptor()
+                    logging.level = HttpLoggingInterceptor.Level.HEADERS
+                    logging.level = HttpLoggingInterceptor.Level.BODY
 
-                if (BuildConfig.DEBUG) {
-                    builder.addInterceptor(logging)
+                    if (BuildConfig.DEBUG) {
+                        builder.addInterceptor(logging)
+                    }
                 }
                 // Create a trust manager that does not validate certificate chains
                 val trustAllCerts = arrayOf<TrustManager>(

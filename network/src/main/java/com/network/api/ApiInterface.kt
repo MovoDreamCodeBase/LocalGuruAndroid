@@ -5,6 +5,7 @@ import com.data.remote.model.DeletePhotoRequest
 import com.data.remote.model.LoginRequest
 import com.data.remote.model.LoginResponse
 import com.data.remote.model.RevisionDataResponse
+import com.network.model.BulkSubPoiItem
 import com.network.model.ResponseData
 import com.network.model.ResponseListData
 import okhttp3.MultipartBody
@@ -38,17 +39,17 @@ interface ApiInterface {
     ): Response<ResponseData<Int>>
 
     @Multipart
-    @POST("PointofInterest/agent-details/create")
+    @POST("PointOfInterest/agent-details/submit-agent-poi")
     suspend fun submitPOIDetails(
         @Part("payload") payload: RequestBody,
         @Part GalleryPhotos: List<MultipartBody.Part>
     ): Response<ResponseData<Int>>
 
-    @GET("PointofInterest/get-poi/{agentId}/{poiId}")
+    @GET("PointofInterest/v2/get-poi/{agentId}/{poiId}")
     suspend fun getRevisionData(
         @Path("agentId") agentId: String,
         @Path("poiId") poiId: String
-    ): Response<ResponseListData<RevisionDataResponse>>
+    ): Response<ResponseData<RevisionDataResponse>>
 
     @Multipart
     @POST("PointofInterest/agent-details/update")
@@ -61,5 +62,24 @@ interface ApiInterface {
     suspend fun deleteGalleryPhotos(
         @Body body: DeletePhotoRequest
     ): Response<ResponseData<Int>>
+
+    @Multipart
+    @POST("SubPointOfInterest/agent-subpoi/create/")
+    suspend fun addPOISubPOI(
+        @Part("payload") payload: RequestBody,
+        @Part GalleryPhotos: List<MultipartBody.Part>
+    ): Response<ResponseData<Int>>
+
+    @POST("Merchant/create-poi")
+    suspend fun createPOI(
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseData<Int>>
+
+    @Multipart
+    @POST("SubPointOfInterest/agent-bulk-subpoi/create")
+    suspend fun addBulkSubPOI(
+        @Part("payload") payload: RequestBody,
+        @Part GalleryPhotos: List<MultipartBody.Part>
+    ): Response<List<BulkSubPoiItem>>
 
 }

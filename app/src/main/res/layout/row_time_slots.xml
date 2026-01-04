@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="@dimen/_8sdp">
+
+    <!-- Open time -->
+    <TextView
+        android:id="@+id/tvOpen"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Open"
+        android:fontFamily="@font/dm_sans_regular"
+        android:background="@drawable/bg_input_bordered"
+        android:padding="@dimen/_10sdp"
+        android:textColor="@android:color/black"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="–"
+        android:padding="@dimen/_8sdp"/>
+
+    <!-- Close time -->
+    <TextView
+        android:id="@+id/tvClose"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Close"
+        android:fontFamily="@font/dm_sans_regular"
+        android:background="@drawable/bg_input_bordered"
+        android:padding="@dimen/_10sdp"
+        android:textColor="@android:color/black"/>
+
+    <!-- Delete -->
+    <ImageView
+        android:id="@+id/btnDelete"
+        android:layout_width="@dimen/_24sdp"
+        android:layout_height="@dimen/_24sdp"
+        android:src="@drawable/ic_delete"
+        android:padding="@dimen/_4sdp"/>
+</LinearLayout>

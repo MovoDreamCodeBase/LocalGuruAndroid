@@ -7,7 +7,9 @@ import com.data.remote.model.DeletePhotoRequest
 import com.network.client.ApiClient
 import com.network.client.BaseRepository
 import com.network.client.ResponseHandler
+import com.network.model.BulkSubPoiItem
 import com.network.model.ResponseData
+import com.network.model.ResponseListData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -78,6 +80,42 @@ class DraftRepository(private val dao: DraftDao): BaseRepository() {
         return withContext(Dispatchers.IO) {
             makeAPICallTemp {
                 apiInterface.deleteGalleryPhotos(data)
+            }
+        }
+    }
+
+    suspend fun addPOISubPOIData(
+        data: RequestBody,
+        files: List<MultipartBody.Part>
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.IO) {
+            makeAPICallTemp {
+                apiInterface.addPOISubPOI(data, files)
+            }
+        }
+    }
+
+    suspend fun addBulkSubPOIData(
+        data: RequestBody,
+        files: List<MultipartBody.Part>
+    ): ResponseHandler<List<BulkSubPoiItem>> {
+
+        return withContext(Dispatchers.IO) {
+            makeBulkSubPoiAPICall {
+                apiInterface.addBulkSubPOI(data, files)
+            }
+        }
+    }
+
+
+    suspend fun createPOI(
+        body: Map<String, Any>
+    ): ResponseHandler<ResponseData<Int>?> {
+
+        return withContext(Dispatchers.IO) {
+            makeAPICallTemp {
+                apiInterface.createPOI(body)
             }
         }
     }

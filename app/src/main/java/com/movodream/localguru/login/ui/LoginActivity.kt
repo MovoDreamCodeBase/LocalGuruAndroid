@@ -7,11 +7,16 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.core.preferences.MyPreference
+import com.core.preferences.PrefKey
 import com.core.utils.Utils
 import com.movodream.localguru.data_collection.ui.activities.DashboardActivity
 import com.movodream.localguru.databinding.ActivityLoginBinding
 import com.movodream.localguru.login.presentation.LoginViewModel
 import com.movodream.localguru.login.repository.LoginResult
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LoginActivity : AppCompatActivity() {
 
@@ -41,7 +46,7 @@ class LoginActivity : AppCompatActivity() {
         } catch (e: Exception) {
             "N/A"
         }
-         binding.tvVersion.text = "Version $versionName"
+         binding.tvVersion.text = "Version + $versionName"
 
 
     }
@@ -105,9 +110,16 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun goToDashboard(data: Map<String, Any>) {
+        MyPreference.setValueString(PrefKey.PHONE_NUMBER,data["agentId"].toString())
+        MyPreference.setValueString(PrefKey.LOGIN_DATE,getTodayDate())
         val intent = Intent(this@LoginActivity, DashboardActivity::class.java)
         intent.putExtra("KEY_AGENT_ID",data["agentId"]?.toString())
         startActivity(intent)
         finish()
+    }
+
+    private fun getTodayDate(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return sdf.format(Date())
     }
 }

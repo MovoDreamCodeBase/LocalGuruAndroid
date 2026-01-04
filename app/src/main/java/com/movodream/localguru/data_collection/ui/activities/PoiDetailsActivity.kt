@@ -1,8 +1,11 @@
 package com.movodream.localguru.data_collection.ui.activities
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.core.base.BaseActivity
+import com.data.remote.model.RevisionDataResponse
 import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.ui.adapter.PhotosAdapter
@@ -24,6 +28,7 @@ class PoiDetailsActivity : BaseActivity() {
     private lateinit var binding: ActivityPoiDetailsBinding
     private val shareBuilder = StringBuilder()
     private  var selectedPOI: TaskItem? = null
+    private  var subPOIList: ArrayList<RevisionDataResponse.SubPoiRecord>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPoiDetailsBinding.inflate(layoutInflater)
@@ -42,6 +47,13 @@ class PoiDetailsActivity : BaseActivity() {
         val galleryRaw = intent.getStringExtra("galleryPhotos") ?: ""
         selectedPOI =
             intent.getParcelableExtra("KEY_POI") as TaskItem?
+        subPOIList=
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableArrayListExtra("KEY_SUB_POI", RevisionDataResponse.SubPoiRecord::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableArrayListExtra("KEY_SUB_POI")
+            }
         binding.tvAgentName.text = selectedPOI!!.agentName
         binding.tvAgentLocation.text = selectedPOI!!.agentLocation +" Data Collector"
         if (selectedPOI!!.agentName.isNullOrBlank()) {
@@ -65,6 +77,7 @@ class PoiDetailsActivity : BaseActivity() {
 
         // loadGalleryImages(galleryRaw,poiDetailsRaw)
         handleGalleryPhotos(poiDetailsJson,galleryRaw)
+        renderSubPois()
     }
 
     private fun handleGalleryPhotos(full: JSONObject, oldJson: String) {
@@ -306,6 +319,140 @@ class PoiDetailsActivity : BaseActivity() {
         }
 
     }
+
+    private fun renderSubPois() {
+        if (subPOIList.isNullOrEmpty()) return
+
+        binding.tvSubPoiTitle.visibility = View.VISIBLE
+        binding.containerSubPois.visibility = View.VISIBLE
+
+        // ---- Share section header ----
+        shareBuilder.append("\n--------------------\n")
+        shareBuilder.append("Sub POIs\n")
+        shareBuilder.append("--------------------\n")
+
+        subPOIList!!.forEachIndexed { index, subPoi ->
+
+            val card = layoutInflater.inflate(
+                R.layout.item_sub_poi_block,
+                binding.containerSubPois,
+                false
+            ) as LinearLayout
+
+            val tvTitle = card.findViewById<TextView>(R.id.tvSubPoiName)
+            val fieldsContainer = card.findViewById<LinearLayout>(R.id.containerSubPoiFields)
+            val rvImages = card.findViewById<RecyclerView>(R.id.rvSubPoiImages)
+
+            val detailsJson = parsePoiDetailsSafely(subPoi.subpoi_details)
+
+            val subPoiName = detailsJson.optString("subPoiName")
+            val title = if (subPoiName.isNotBlank()) subPoiName else "Sub POI ${index + 1}"
+
+            // ---- UI title ----
+            tvTitle.text = title
+
+            // ---- Share title ----
+            shareBuilder.append("\nSub POI ${index + 1}\n")
+            shareBuilder.append("$title\n")
+
+            val keys = detailsJson.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+
+                if (key.equals("PoiId", true) ||
+                    key.equals("AgentId", true)) continue
+
+                val value = detailsJson.opt(key)
+
+                // UI rendering
+                addSubPoiField(fieldsContainer, key, value)
+
+                // SHARE rendering
+                appendSubPoiToShare(key, value)
+            }
+
+            // ---- Gallery UI only (NOT added to share) ----
+            loadSubPoiGallery(rvImages, subPoi.subpoi_galleryphotos)
+
+            binding.containerSubPois.addView(card)
+        }
+    }
+    private fun appendSubPoiToShare(key: String, value: Any?) {
+        if (value == null) return
+
+        when (value) {
+            is String -> {
+                val v = value.trim()
+                if (v.isNotEmpty()) {
+                    shareBuilder.append("${keyToLabel(key)} : ${formatValue(v)}\n")
+                }
+            }
+
+            is Number, is Boolean -> {
+                shareBuilder.append("${keyToLabel(key)} : $value\n")
+            }
+
+            is JSONArray -> {
+                if (value.length() > 0) {
+                    val list = mutableListOf<String>()
+                    for (i in 0 until value.length()) {
+                        val item = value.optString(i)
+                        if (item.isNotBlank()) list.add(formatValue(item))
+                    }
+                    if (list.isNotEmpty()) {
+                        shareBuilder.append("${keyToLabel(key)} :\n")
+                        list.forEach { shareBuilder.append("• $it\n") }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addSubPoiField(parent: LinearLayout, key: String, value: Any?) {
+        if (value == null) return
+
+        when (value) {
+            is String -> {
+                val v = value.trim()
+                if (v.isNotEmpty()) {
+                    val row = ItemDetailRowBinding.inflate(
+                        layoutInflater,
+                        parent,
+                        false
+                    )
+                    row.tvLabel.text = "${keyToLabel(key)} :"
+                    row.tvValue.text = formatValue(v)
+                    parent.addView(row.root)
+                }
+            }
+        }
+    }
+
+    private fun loadSubPoiGallery(rv: RecyclerView, raw: String?) {
+        if (raw.isNullOrBlank() || raw == "[]") return
+
+        val arr = try {
+            JSONArray(raw)
+        } catch (e: Exception) {
+            return
+        }
+
+        val urls = mutableListOf<String>()
+        for (i in 0 until arr.length()) {
+            val obj = arr.optJSONObject(i) ?: continue
+            val url = obj.optString("img_url")
+            if (url.isNotBlank()) urls.add(url)
+        }
+
+        if (urls.isEmpty()) return
+
+        rv.visibility = View.VISIBLE
+        rv.layoutManager =
+            LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        rv.adapter = PhotosAdapter(urls)
+        rv.isNestedScrollingEnabled = false
+    }
+
 
     private fun sharePoiDetails() {
         val textToShare = shareBuilder.toString().trim()

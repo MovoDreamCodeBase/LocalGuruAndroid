@@ -47,7 +47,9 @@ data class FieldSchema(
     val captureRequired: Boolean? = null,
     val instructions: String? = null,
     val regex: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val addButtonLabel: String? = null,
+    val helperText: String? = null
 ): Parcelable
 @Parcelize
-data class Option(val value: String, val label: String): Parcelable
+data class Option(val value: String, val label: String,val id :Int): Parcelable

@@ -73,10 +73,10 @@ class DashboardRepository  : BaseRepository(){
 
     suspend fun revisionData(
         agentId: String,poiId : String
-    ): ResponseHandler<ResponseListData<RevisionDataResponse>?> {
+    ): ResponseHandler<ResponseData<RevisionDataResponse>?> {
 
         return withContext(Dispatchers.Default) {
-            return@withContext makeAPICallForListTemp {
+            return@withContext makeAPICallTemp {
                 apiInterface.getRevisionData(
                     agentId, poiId
                 )

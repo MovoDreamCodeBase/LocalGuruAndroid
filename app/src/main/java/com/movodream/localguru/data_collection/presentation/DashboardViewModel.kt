@@ -57,9 +57,9 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
         MutableLiveData<ResponseHandler<ResponseData<AgentTaskResponse>?>>()
 
     var revisionDataResponse =
-        MutableLiveData<ResponseHandler<ResponseListData<RevisionDataResponse>?>>()
+        MutableLiveData<ResponseHandler<ResponseData<RevisionDataResponse>?>>()
     var poiDataResponse =
-        MutableLiveData<ResponseHandler<ResponseListData<RevisionDataResponse>?>>()
+        MutableLiveData<ResponseHandler<ResponseData<RevisionDataResponse>?>>()
     private val fusedClient by lazy {
         LocationServices.getFusedLocationProviderClient(getApplication<Application>())
     }
@@ -126,8 +126,8 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
 
-
-        val mappedTasks = data.assignedPOIs.map { poi ->
+        val reversedList = data.assignedPOIs.reversed()
+        val mappedTasks = reversedList.map { poi ->
 
 
             // 🔥 Determine Priority Based on Rules
@@ -139,18 +139,26 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
                 else -> AppConstants.STATUS_NOT_STARTED
             }
 
+            val computedProgress = when {
+
+                poi.taskStatus == "Completed" -> 100
+
+                else -> poi.progress
+            }
             TaskItem(
                 poiId = poi.poiId,
                 poiName = poi.poiName,
                 category = poi.category,
-                categoryId = poi.categoryId.toString(),
+               categoryId = poi.categoryId.toString(),
+
+
                // categoryId = "RELIGIOUS_SITES",
 
                 // 🔥 Replacing API value with computed priority
                 taskPriority = computedPriority,
 
                 taskStatus = poi.taskStatus,
-                progress = poi.progress,
+                progress = computedProgress,
                 revisionRequired = poi.revisionRequired,
                 revisionMessage = poi.revisionMessage ?: "",
                 contactNo = poi.contactNo,

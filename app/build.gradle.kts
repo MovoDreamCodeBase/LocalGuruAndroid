@@ -15,8 +15,8 @@ android {
         applicationId = "com.movodream.localguru"
         minSdk = 24
         targetSdk = 36
-        versionCode = 116
-        versionName = "1.1.6"
+        versionCode = 121
+        versionName = "1.2.1"
 
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

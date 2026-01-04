@@ -14,6 +14,7 @@ object AppConstants {
     const val FIREBASE_LOCAL_GURU_DB = "FirebaseLocalGuruDB"
     const val AGENT_LOGIN_CREDENTIALS = "AgentLoginCredentialsTable"
     const val DYNAMIC_DATA_SET = "LocalGuruDynamicFieldsData"
+    const val LOGGER_ENABLED = false
 
 
 }

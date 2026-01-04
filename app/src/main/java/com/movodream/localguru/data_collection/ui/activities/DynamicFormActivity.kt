@@ -2,23 +2,33 @@ package com.movodream.localguru.data_collection.ui.activities
 
 import android.Manifest
 import android.app.Activity
+import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,21 +36,29 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.core.base.BaseActivity
 import com.core.customviews.CustomDialogBuilder
-import com.core.customviews.ZoomImageView
 import com.core.utils.DebugLog
 import com.core.utils.PermissionUtils
 import com.core.utils.Utils
+import com.google.android.flexbox.FlexboxLayout
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.movodream.localguru.R
 import com.movodream.localguru.data_collection.model.FormSchema
+import com.movodream.localguru.data_collection.model.PhotoWithMeta
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.FormViewModel
 import com.movodream.localguru.data_collection.ui.adapter.DynamicFormAdapter
 import com.movodream.localguru.data_collection.ui.adapter.TabAdapter
 import com.network.client.ResponseHandler
+import com.network.model.BulkSubPoiItem
 import com.network.model.ResponseData
-import org.json.JSONObject
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import kotlin.collections.emptyList
 import kotlin.collections.indexOfFirst
 import kotlin.text.contains
 import kotlin.text.substringBefore
@@ -48,7 +66,7 @@ import kotlin.text.substringBefore
 
 class DynamicFormActivity : BaseActivity() {
 
-    private lateinit var removeUri: Uri
+    private lateinit var removeUri: String
     private lateinit var removePhotoFieldId: String
     private lateinit var vm: FormViewModel
     private lateinit var tabRecycler: RecyclerView
@@ -81,12 +99,15 @@ class DynamicFormActivity : BaseActivity() {
         permissions.toTypedArray()
     }
     // Gallery picker
-    private val pickImages =
-        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-            if (uris.isNotEmpty() && currentPhotoFieldId != null) {
-                vm.addPhotoUris(currentPhotoFieldId!!, uris)
-            }
-        }
+//    private val pickImages =
+//        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+//            if (uris.isNotEmpty() && currentPhotoFieldId != null) {
+//                vm.addPhotoUris(currentPhotoFieldId!!, uris)
+//            }
+//        }
+    //Temp change
+    private var currentSubPoiIndex = 0
+    private var totalSubPoiCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +117,7 @@ class DynamicFormActivity : BaseActivity() {
         selectedPOI =
             intent.getParcelableExtra("KEY_POI") as TaskItem?
         selectedPOI?.let { poiId = it.poiId }
+
         vm = ViewModelProvider(
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
@@ -111,7 +133,7 @@ class DynamicFormActivity : BaseActivity() {
         saveBtn = findViewById(R.id.cv_btn_save)
         submitBtn = findViewById(R.id.cv_btn_submit)
 
-       val tvAgentProfile: AppCompatTextView=findViewById(R.id.tv_agent_profile)
+        val tvAgentProfile: AppCompatTextView=findViewById(R.id.tv_agent_profile)
         val tvAgentLocation: AppCompatTextView=findViewById(R.id.tv_agent_location)
         val tvAgentName: AppCompatTextView=findViewById(R.id.tv_agent_name)
 
@@ -161,21 +183,21 @@ class DynamicFormActivity : BaseActivity() {
             },
             onFieldChanged = { id, value -> vm.updateValue(id, value) },
             onRemovePhoto = { fieldId, uri ->
-                var urlString  = uri.toString()
 
-                if(urlString.contains("|")){
+                val uriStr = uri.toString()
+
+                if (uriStr.contains("|")) {
+                    //  Server photo
                     removePhotoFieldId = fieldId
-                    removeUri = uri
+                    removeUri = uriStr
                     callDeletePhotoAPI()
-                }else{
-                    vm.removePhotoUri(fieldId, uri)
+                } else {
+                    //  Local photo
+                    vm.removePhoto(fieldId, uriStr)
                 }
+            },
 
-
-
-
-                            },
-            onAddNotification = onAdd@{
+                    onAddNotification = onAdd@{
                 val errors = vm.addNotification()
 
                 if (errors.isNotEmpty()) {
@@ -188,8 +210,49 @@ class DynamicFormActivity : BaseActivity() {
                 vm.removeNotification(index)
                 Toast.makeText(this, "Notification removed", Toast.LENGTH_SHORT).show()
             }, onPreviewPhotos = { fieldId, uris ->
-                showPhotoPreviewDialog(fieldId, uris)  // final call
+               // showPhotoPreviewDialog(fieldId, uris)  // final call
+                val intent = Intent(this@DynamicFormActivity, PhotoMetadataActivity::class.java).apply {
+                    putExtra("fieldId", fieldId)
+                    putParcelableArrayListExtra(
+                        "photos",
+                        ArrayList(vm.getPhotoMetadata(fieldId))
+                    )
+                }
+                photoMetaLauncher.launch(intent)
+            },onAddSubPoi = {
+                val errors = vm.addSubPoi()
+                if (errors.isNotEmpty())
+                    Toast.makeText(this, errors.values.first(), Toast.LENGTH_LONG).show()
+            },onRemoveSubPoi = { index ->
+                vm.removeSubPoi(index)
+            },
+
+            onOperationalHoursChanged =  { days, clickedDay ->
+                showOperationalHoursDialog(
+                    week = days.toMutableList(),
+                    editDay = clickedDay
+                )
+            },
+            onAddHoliday = {
+                showAddHolidayDialog()
+            },
+            onAddSeasonal = {
+                showAddSeasonalDialog()
+            },
+
+            onRemoveHoliday = { index ->
+                vm.removeHoliday(index)
+            },
+            onRemoveSeason = { index ->
+                vm.removeSeasonal(index)
+            },onRequestRebind = { fieldId ->
+                vm.notifyFieldChanged(fieldId) // ✅ ONLY PLACE this exists
             }
+
+
+
+
+
         )
         adapter.setHasStableIds(true)
         recycler.adapter = adapter
@@ -218,11 +281,23 @@ class DynamicFormActivity : BaseActivity() {
             val schema = vm.schemaLive.value ?: return@setOnClickListener
             val currentTabId = lastShownTabId ?: return@setOnClickListener
 
-            val errors = vm.validateTab(currentTabId)
-            if (errors.isNotEmpty()) {
-                Toast.makeText(this, errors.values.first(), Toast.LENGTH_LONG).show()
-                adapter.setErrors(errors)
-                return@setOnClickListener
+            if (currentTabId != "add_sub_poi_of_poi") {
+
+                val errors = vm.validateTab(currentTabId)
+                if (errors.isNotEmpty()) {
+                    Toast.makeText(this, errors.values.first(), Toast.LENGTH_LONG).show()
+                    adapter.setErrors(errors)
+                    return@setOnClickListener
+                }
+            }
+
+            // ✅ Validate ONLY addSubPois list if required
+            if (currentTabId == "add_sub_poi_of_poi") {
+                val subPoiErrors = vm.validateSubPoiListForDraft(currentTabId)
+                if (subPoiErrors.isNotEmpty()) {
+                    Toast.makeText(this, subPoiErrors.values.first(), Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
             }
 
             vm.saveDraftForTab(currentTabId)
@@ -244,7 +319,26 @@ class DynamicFormActivity : BaseActivity() {
         submitBtn.setOnClickListener {
             val schema = vm.schemaLive.value ?: return@setOnClickListener
             val allErrors = mutableMapOf<String, String>()
-            schema.tabs.forEach { t -> allErrors.putAll(vm.validateTab(t.id)) }
+//            schema.tabs.forEach { t -> allErrors.putAll(vm.validateTab(t.id)) }
+            schema.tabs.forEach { tab ->
+
+                //  Skip normal validation for Sub-POI tab
+                if (tab.id != "add_sub_poi_of_poi") {
+                    allErrors.putAll(vm.validateTab(tab.id))
+                } else {
+                    //  Validate ONLY sub-poi list if required
+                    allErrors.putAll(vm.validateSubPoiListForDraft(tab.id))
+                }
+            }
+            // Custom metadata validation
+            val metaField = schema.tabs
+                .flatMap { it.fields }
+                .firstOrNull { it.id == "customMetadata" }
+
+            allErrors.putAll(
+                vm.validateCustomMetadata(metaField?.required == true)
+            )
+
             if (allErrors.isNotEmpty()) {
                 Toast.makeText(this, allErrors.values.first(), Toast.LENGTH_LONG).show()
                 return@setOnClickListener
@@ -280,7 +374,7 @@ class DynamicFormActivity : BaseActivity() {
 
     private fun callDeletePhotoAPI() {
         var urlString  = removeUri.toString()
-         vm.callDeletePhotoAPI(urlString, selectedPOI!!.agentId ,""+poiId)
+        vm.callDeletePhotoAPI(urlString, selectedPOI!!.agentId ,""+poiId)
     }
 
     private fun setObserver() {
@@ -327,31 +421,130 @@ class DynamicFormActivity : BaseActivity() {
 
                         state.response?.let {
                             Utils.hideProgressDialog()
-                            CustomDialogBuilder(this)
-                                .setTitle("Successful")
-                                .setMessage(
-                                    if (vm._isRevisionState.value == true)
-                                        "Data Updated Successfully"
-                                    else
-                                        "Data Submitted Successfully"
+
+                            if (vm._isRevisionState.value == false&&vm.hasAtLeastOneSubPoi()) {
+                                //  vm.submitSubPoi() // or call Sub POI API builder
+                                startSubPoiSubmission()
+                               // startSubPoiBulkUpload()
+                            }else {
+                                CustomDialogBuilder(this)
+                                    .setTitle("Successful")
+                                    .setMessage(
+                                        if (vm._isRevisionState.value == true)
+                                            "Data Updated Successfully"
+                                        else
+                                            "Data Submitted Successfully"
                                     )
 
-                                .setPositiveButton("OK") {
+                                    .setPositiveButton("OK") {
 
 
-                                    vm.deleteDraftAfterSubmit(""+poiId) {
-                                        setResult(Activity.RESULT_OK)
-                                        finish()  // close after draft is removed
+                                        vm.deleteDraftAfterSubmit("" + poiId) {
+                                            setResult(Activity.RESULT_OK)
+                                            finish()  // close after draft is removed
+                                        }
                                     }
-                                }
 
-                            .setCancelable(false)
-                            .show()
+                                    .setCancelable(false)
+                                    .show()
+                            }
 
                         }
 
 
+                        //Utils.hideProgressDialog()
+
+                    }
+                }
+            })
+
+
+
+        vm.bulkSubPOIResponse.observe(
+            this,
+            androidx.lifecycle.Observer { state ->
+                if (state == null) {
+                    return@Observer
+                }
+
+                when (state) {
+
+                    is ResponseHandler.Loading -> {
+                        Utils.showProgressDialog(this)
+                    }
+                    is ResponseHandler.OnFailed -> {
                         Utils.hideProgressDialog()
+
+                        if (state.code == 401) {
+                            CustomDialogBuilder(this)
+                                .setTitle("Error")
+                                .setMessage("Error : 401"
+                                )
+                                .setPositiveButton("Retry") {
+
+                                    // startSubPoiBulkUpload()
+                                    submitCurrentSubPoi()
+                                }
+
+                            .setCancelable(false)
+                            .show()
+                        } else {
+                            state.message.let { m ->
+                                DebugLog.e("Config Api Error Response : $m")
+
+
+                                CustomDialogBuilder(this)
+                                    .setTitle("Error")
+                                    .setMessage(m
+                                    )
+                                    .setPositiveButton("Retry") {
+
+                                       // startSubPoiBulkUpload()
+                                        submitCurrentSubPoi()
+                                    }
+                            }
+                                .setCancelable(false)
+                                .show()
+                        }
+                    }
+
+
+                    is ResponseHandler.OnSuccessResponse<List<BulkSubPoiItem>?> -> {
+
+                        Utils.hideProgressDialog()
+                        state.response?.let {
+
+
+                            //  MOVE TO NEXT
+                            currentSubPoiIndex++
+
+                            if (currentSubPoiIndex < totalSubPoiCount) {
+
+                                // 👉 Submit next Sub-POI silently
+                                submitCurrentSubPoi()
+
+                            } else {
+
+                                //  ALL SUB-POIs DONE (SHOW ONCE)
+                                CustomDialogBuilder(this)
+                                    .setTitle("Successful")
+                                    .setMessage(
+                                        "Data submitted successfully! You can view the details of the selected POI in the Completed tab of the Tasks section."
+                                    )
+                                    .setPositiveButton("OK") {
+                                        vm.deleteDraftAfterSubmit("" + poiId) {
+                                            setResult(Activity.RESULT_OK)
+                                            finish()
+                                        }
+                                    }
+                                    .setCancelable(false)
+                                    .show()
+                            }
+
+                        }
+
+
+
 
                     }
                 }
@@ -398,7 +591,7 @@ class DynamicFormActivity : BaseActivity() {
 
                         state.response?.let {
                             Utils.hideProgressDialog()
-                            vm.removePhotoUri(removePhotoFieldId,removeUri)
+                          //  vm.removePhotoUri(removePhotoFieldId,removeUri)
 
                         }
 
@@ -427,6 +620,11 @@ class DynamicFormActivity : BaseActivity() {
         lastShownTabId = tabId
         val schema = vm.schemaLive.value ?: return
         val tab = schema.tabs.firstOrNull { it.id == tabId } ?: return
+        //  Ensure only when operational hours tab opens
+        if (tab.id == "operational_hours") {
+            vm.ensureOperationalHours()
+            vm.ensureHolidayAndSeasonal()
+        }
         adapter.submitFields(tab.fields, vm.valuesLive.value ?: emptyMap())
         val pos = schema.tabs.indexOf(tab)
         if (pos >= 0) tabRecycler.smoothScrollToPosition(pos)
@@ -512,7 +710,7 @@ class DynamicFormActivity : BaseActivity() {
             showEnableGpsDialog()
         } else {
             fetchLocation()
-                  }
+        }
     }
 
 
@@ -533,7 +731,7 @@ class DynamicFormActivity : BaseActivity() {
                 permissionUtils.checkAndEnableLocationSettings { enabled ->
                     if (enabled) {
                         //  Start fetching location
-                      fetchLocation()
+                        fetchLocation()
                     } else {
 
                     }
@@ -548,49 +746,57 @@ class DynamicFormActivity : BaseActivity() {
 
     private val mapLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val lat = result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
-                val lng = result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
 
-                val rawLocation = result.data?.getStringExtra("locationInfo").orEmpty().trim()
-                val physicalAddress = result.data?.getStringExtra("address").orEmpty().trim()
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
-                Log.d("ADDRESS : ", rawLocation)
-                Log.d("physicalAddress : ", physicalAddress)
-                val parts = if (rawLocation.isNotEmpty()) {
-                    rawLocation.split("|").map { it.trim() }
-                } else {
-                    emptyList()
-                }
+            val lat = result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
+            val lng = result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
 
-                // Ensure always 3 values
-                val city    = parts.getOrNull(0).orEmpty()
-                val state   = parts.getOrNull(1).orEmpty()
-                val country = parts.getOrNull(2).orEmpty()
+            val rawLocation = result.data?.getStringExtra("locationInfo").orEmpty().trim()
+            val physicalAddress = result.data?.getStringExtra("address").orEmpty().trim()
 
+            val parts = rawLocation.split("|").map { it.trim() }
 
-                vm.updateValue("latitude", lat)
-                vm.updateValue("longitude", lng)
+            val city = parts.getOrNull(0).orEmpty()
+            val state = parts.getOrNull(1).orEmpty()
+            val country = parts.getOrNull(2).orEmpty()
+
+            // ✅ Update requested latitude / longitude
+            vm.updateValue(pendingLatField, lat)
+            vm.updateValue(pendingLngField, lng)
+
+            // ✅ Decide target address fields dynamically
+            val isSubPoi = pendingLatField.startsWith("subPoi")
+
+            if (isSubPoi) {
+                vm.updateValue("subPoiPhysicalAddress", physicalAddress)
+            } else {
+                vm.updateValue("physicalAddress", physicalAddress)
                 vm.updateValue("localityTown", city)
                 vm.updateValue("regionState", state)
                 vm.updateValue("country", country)
-                vm.updateValue("physicalAddress", physicalAddress)
-                if (lat != 0.0 && lng != 0.0) {
-                    vm.updateValue("pinVerifiedViaGps", "Y")
-                    vm.notifyFieldChanged("pinVerifiedViaGps")
-                }
-                vm.notifyFieldChanged("latitude")
-                vm.notifyFieldChanged("longitude")
+            }
+
+            vm.updateValue("pinVerifiedViaGps", "Y")
+
+            // 🔄 Notify UI
+            vm.notifyFieldChanged(pendingLatField)
+            vm.notifyFieldChanged(pendingLngField)
+
+            if (isSubPoi) {
+                vm.notifyFieldChanged("subPoiPhysicalAddress")
+            } else {
+                vm.notifyFieldChanged("physicalAddress")
                 vm.notifyFieldChanged("localityTown")
                 vm.notifyFieldChanged("regionState")
                 vm.notifyFieldChanged("country")
-                vm.notifyFieldChanged("physicalAddress")
             }
         }
 
+
     private fun showPhotoPreviewDialog(fieldId: String, uris: MutableList<Uri>)
     {
-    // Always work on a mutable reference to actual list
+        // Always work on a mutable reference to actual list
         val list = uris.toMutableList()
 
         if (list.isEmpty()) return
@@ -668,6 +874,883 @@ class DynamicFormActivity : BaseActivity() {
 
         dialog.show()
     }
+
+
+
+    // Holds a safe template copy of slots for applying to multiple days
+    private fun templateSlotsCopy(
+        slots: List<FormViewModel.TimeSlot>
+    ): MutableList<FormViewModel.TimeSlot> {
+        return slots.map {
+            FormViewModel.TimeSlot(
+                open = it.open,
+                close = it.close
+            )
+        }.toMutableList()
+    }
+
+    private fun showOperationalHoursDialog(
+        week: MutableList<FormViewModel.OperationalDay>,
+        editDay: FormViewModel.WeekDay
+    ) {
+        // --- defensive copy ---
+        val workingCopy = week.map {
+            it.copy(slots = it.slots.toMutableList())
+        }.toMutableList()
+        val sourceDay = workingCopy.first { it.day == editDay }
+
+        // template = what user edits inside dialog
+        val template = workingCopy.first { it.day == editDay }
+            .copy(slots = templateSlotsCopy(sourceDay.slots)
+            )
+
+        val selectedDays = mutableSetOf(editDay)
+
+        val dialog = BottomSheetDialog(this)
+        dialog.setContentView(R.layout.dialog_operational_hours)
+
+        val chipGroup = dialog.findViewById<FlexboxLayout>(R.id.dayChips)!!
+        val rbClosed = dialog.findViewById<RadioButton>(R.id.rbClosed)!!
+        val rb24 = dialog.findViewById<RadioButton>(R.id.rb24Hours)!!
+        val rbCustom = dialog.findViewById<RadioButton>(R.id.rbCustom)!!
+        val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
+        val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        // --- day chips ---
+        FormViewModel.WeekDay.values().forEach { day ->
+            val chip = createDayChip(day, selectedDays)
+
+            val params = ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginEnd = 20   // horizontal spacing
+                bottomMargin = 2 // vertical spacing (if wrapping to next line)
+            }
+
+            chip.layoutParams = params
+
+            // ✅ Pre-highlight edited day
+            if (selectedDays.contains(day)) {
+                chip.background =
+                    ContextCompat.getDrawable(this, R.drawable.bg_chip_selected)
+            }
+
+            chipGroup.addView(chip)
+        }
+
+        // --- prefill mode ---
+        when {
+            template.isClosed -> rbClosed.isChecked = true
+            template.isOpen24Hours -> rb24.isChecked = true
+            else -> rbCustom.isChecked = true
+        }
+
+        fun refreshSlotsUI() {
+            slotContainer.removeAllViews()
+            template.slots.forEach { slot ->
+                addSlotRow(this, slotContainer, template, slot)
+            }
+        }
+
+        rbClosed.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                template.isClosed = true
+                template.isOpen24Hours = false
+                template.slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+        rb24.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                template.isClosed = false
+                template.isOpen24Hours = true
+                template.slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+        rbCustom.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                template.isClosed = false
+                template.isOpen24Hours = false
+                if (template.slots.isEmpty()) {
+                    template.slots.add(FormViewModel.TimeSlot(0, 0))
+                }
+                refreshSlotsUI()
+            }
+        }
+
+        btnAddSlot.setOnClickListener {
+            template.isClosed = false
+            template.isOpen24Hours = false
+            rbCustom.isChecked = true
+            val slot = FormViewModel.TimeSlot(0, 0)
+            template.slots.add(slot)
+            addSlotRow(this, slotContainer, template, slot)
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val error = validateSlots(template)
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            selectedDays.forEach { day ->
+                val d = workingCopy.first { it.day == day }
+
+                when {
+                    rbClosed.isChecked -> {
+                        d.isClosed = true
+                        d.isOpen24Hours = false
+                        d.slots.clear()
+                    }
+
+                    rb24.isChecked -> {
+                        d.isClosed = false
+                        d.isOpen24Hours = true
+                        d.slots.clear()
+                    }
+
+                    else -> {
+                        d.isClosed = false
+                        d.isOpen24Hours = false
+                        d.slots.clear()
+                        d.slots.addAll(templateSlotsCopy(template.slots)) // ✅ CORRECT
+                    }
+                }
+            }
+
+
+            vm.updateValue("operationalHours", workingCopy)
+            vm.notifyFieldChanged("operationalHours")
+            dialog.dismiss()
+        }
+
+        if (!template.isClosed && !template.isOpen24Hours) {
+            refreshSlotsUI()
+        }
+
+        dialog.show()
+    }
+
+
+    /**
+     * Validates time slots for a single day.
+     * @return null if valid, otherwise error message
+     */
+    fun validateSlots(day: FormViewModel.OperationalDay): String? {
+        if (day.isClosed || day.isOpen24Hours) return null
+
+        if (day.slots.isEmpty()) return "Please add at least one time slot"
+
+        val sorted = day.slots.sortedBy { it.open }
+
+        sorted.forEachIndexed { i, s ->
+            if (s.open <= 0 || s.close <= 0) return "Please select both open & close time"
+            if (s.open >= s.close) return "Open time must be before close time"
+            if (i > 0 && sorted[i - 1].close > s.open)
+                return "Time slots must not overlap"
+        }
+        return null
+    }
+
+
+
+    private fun createDayChip(
+        day: FormViewModel.WeekDay,
+        selected: MutableSet<FormViewModel.WeekDay>
+    ): TextView {
+        return TextView(this).apply {
+            text = day.name.first().toString()
+            setPadding(24, 12, 24, 12)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
+            typeface = ResourcesCompat.getFont(context, com.core.R.font.dm_sans_bold)
+            setTextColor(Color.BLACK)
+            setOnClickListener {
+                if (selected.contains(day)) {
+                    selected.remove(day)
+                    background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
+                } else {
+                    selected.add(day)
+                    background = ContextCompat.getDrawable(context, R.drawable.bg_chip_selected)
+                }
+            }
+        }
+    }
+
+
+    private fun addSlotRow(
+        context: Context,
+        container: LinearLayout,
+        day: FormViewModel.OperationalDay,
+        slot: FormViewModel.TimeSlot
+    ) {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+
+        val openTv = TextView(context).apply {
+            text = if (slot.open > 0) fromMinutes(slot.open) else "Open"
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_input_bordered)
+            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+        }
+
+        val dash = TextView(context).apply {
+            text = " – "
+            setPadding(8, 0, 8, 0)
+        }
+
+        val closeTv = TextView(context).apply {
+            text = if (slot.close > 0) fromMinutes(slot.close) else "Close"
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_input_bordered)
+            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+        }
+
+        val delete = ImageView(context).apply {
+            setImageResource(R.drawable.ic_delete)
+            setPadding(16, 16, 16, 16)
+        }
+
+        openTv.setOnClickListener {
+            showTimePicker(context) { display, minutes ->
+                slot.open = minutes
+                openTv.text = display
+            }
+        }
+
+        closeTv.setOnClickListener {
+            showTimePicker(context) { display, minutes ->
+                slot.close = minutes
+                closeTv.text = display
+            }
+        }
+
+        delete.setOnClickListener {
+            day.slots.remove(slot)
+            container.removeView(row)
+        }
+
+        row.addView(openTv)
+        row.addView(dash)
+        row.addView(closeTv)
+        row.addView(delete)
+        container.addView(row)
+    }
+
+
+
+    private fun collectSlots(container: LinearLayout): List<FormViewModel.TimeSlot> {
+        val list = mutableListOf<FormViewModel.TimeSlot>()
+
+        for (i in 0 until container.childCount) {
+            val v = container.getChildAt(i)
+            val open = v.findViewById<TextView>(R.id.tvOpen).text.toString()
+            val close = v.findViewById<TextView>(R.id.tvClose).text.toString()
+
+            list.add(
+                FormViewModel.TimeSlot(
+                    open = toMinutes(open),
+                    close = toMinutes(close)
+                )
+            )
+        }
+        return list
+    }
+
+
+
+    fun showTimePicker(
+        context: Context,
+        onResult: (display: String, minutes: Int) -> Unit
+    ) {
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val hour24 = picker.hour
+            val minute = picker.minute
+
+            val minutesFromMidnight = hour24 * 60 + minute
+
+            val hour12 = when {
+                hour24 == 0 -> 12
+                hour24 > 12 -> hour24 - 12
+                else -> hour24
+            }
+            val ampm = if (hour24 < 12) "AM" else "PM"
+
+            val display = String.format(
+                Locale.US,
+                "%d:%02d %s",
+                hour12,
+                minute,
+                ampm
+            )
+
+            onResult(display, minutesFromMidnight)
+        }
+
+        picker.show((context as AppCompatActivity).supportFragmentManager, "TIME_PICKER")
+    }
+
+
+    fun toMinutes(time: String): Int {
+        val sdf = SimpleDateFormat("hh:mm a", Locale.US)
+        sdf.isLenient = false
+
+        val date = sdf.parse(time)
+            ?: throw IllegalArgumentException("Invalid time: $time")
+
+        val cal = Calendar.getInstance()
+        cal.time = date
+
+        return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+    }
+    fun fromMinutes(minutes: Int): String {
+        val h = minutes / 60
+        val m = minutes % 60
+
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, h)
+        cal.set(Calendar.MINUTE, m)
+
+        val sdf = SimpleDateFormat("hh:mm a", Locale.US)
+        return sdf.format(cal.time)
+    }
+
+
+    private fun fmt(min: Int): String {
+        val h24 = min / 60
+        val m = min % 60
+
+        val ampm = if (h24 < 12) "am" else "pm"
+        val h12 = when {
+            h24 == 0 -> 12
+            h24 > 12 -> h24 - 12
+            else -> h24
+        }
+
+        return "$h12:${m.toString().padStart(2, '0')} $ampm"
+    }
+
+
+    private fun showAddHolidayDialog() {
+
+        val dialog = BottomSheetDialog(this)
+        dialog.setContentView(R.layout.dialog_add_holiday)
+        val etName = dialog.findViewById<EditText>(R.id.etName)!!
+        val tvDate = dialog.findViewById<TextView>(R.id.tvDate)!!
+        val rbClosed = dialog.findViewById<RadioButton>(R.id.rbClosed)!!
+        val rb24 = dialog.findViewById<RadioButton>(R.id.rb24Hours)!!
+        val rbCustom = dialog.findViewById<RadioButton>(R.id.rbCustom)!!
+        val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
+        val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        var selectedDate = ""
+
+        tvDate.setOnClickListener {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, y, m, d ->
+                    selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
+                    tvDate.text = selectedDate
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+
+        val slots = mutableListOf<FormViewModel.TimeSlot>()
+
+        btnAddSlot.setOnClickListener {
+            addSlotRow(this, slotContainer, slots)
+        }
+        rbClosed.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+                slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+        rb24.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+                slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+
+        rbCustom.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+
+                addSlotRow(this, slotContainer, slots)
+            }
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val name = etName.text.toString().trim()
+
+
+            val h = FormViewModel.HolidayException(
+                name = name,
+                date = selectedDate,
+                isClosed = rbClosed.isChecked,
+                isOpen24Hours = rb24.isChecked,
+                slots = if (rbCustom.isChecked) slots else mutableListOf()
+            )
+            val existing =
+                vm.valuesLive.value?.get("holidayExceptions")
+                        as? List<FormViewModel.HolidayException>
+                    ?: emptyList()
+
+            val error = validateHoliday(h, existing)
+
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            vm.addHoliday(h)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun showAddSeasonalDialog() {
+
+        val dialog = BottomSheetDialog(this)
+        dialog.setContentView(R.layout.dialog_add_season)
+        val etName = dialog.findViewById<EditText>(R.id.etSeasonName)!!
+        val tvStart = dialog.findViewById<TextView>(R.id.tvStartDate)!!
+        val tvEnd = dialog.findViewById<TextView>(R.id.tvEndDate)!!
+        val rbClosed = dialog.findViewById<RadioButton>(R.id.rbClosed)!!
+        val rb24 = dialog.findViewById<RadioButton>(R.id.rb24Hours)!!
+        val rbCustom = dialog.findViewById<RadioButton>(R.id.rbCustom)!!
+        val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
+        val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        var startDate = ""
+        var endDate = ""
+
+        fun pickDate(cb: (String) -> Unit) {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, y, m, d -> cb("%04d-%02d-%02d".format(y, m + 1, d)) },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+
+        tvStart.setOnClickListener { pickDate { startDate = it; tvStart.text = it } }
+        tvEnd.setOnClickListener { pickDate { endDate = it; tvEnd.text = it } }
+
+        val slots = mutableListOf<FormViewModel.TimeSlot>()
+
+        btnAddSlot.setOnClickListener {
+            addSlotRow(this, slotContainer, slots)
+        }
+        rbClosed.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+                slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+        rb24.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+                slots.clear()
+                slotContainer.removeAllViews()
+            }
+        }
+
+
+        rbCustom.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+
+
+                addSlotRow(this, slotContainer, slots)
+            }
+        }
+
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+            val name = etName.text.toString().trim()
+
+
+            val s = FormViewModel.SeasonalHours(
+                name = name,
+                startDate = startDate,
+                endDate = endDate,
+                isClosed = rbClosed.isChecked,
+                isOpen24Hours = rb24.isChecked,
+                slots = if (rbCustom.isChecked) slots else mutableListOf()
+            )
+
+            val existing =
+                vm.valuesLive.value?.get("seasonalHours")
+                        as? List<FormViewModel.SeasonalHours>
+                    ?: emptyList()
+
+            val error = validateSeasonal(s, existing)
+
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            vm.addSeasonal(s)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun addSlotRow(
+        context: Context,
+        container: LinearLayout,
+        slots: MutableList<FormViewModel.TimeSlot>
+    ) {
+        val slot = FormViewModel.TimeSlot(open = -1, close = -1)
+        slots.add(slot)
+
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+
+        val openTv = TextView(context).apply {
+            text = "Open"
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_input_bordered)
+            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+        }
+
+        val dash = TextView(context).apply {
+            text = " – "
+            setPadding(8, 0, 8, 0)
+        }
+
+        val closeTv = TextView(context).apply {
+            text = "Close"
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_input_bordered)
+            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+        }
+
+        val delete = ImageView(context).apply {
+            setImageResource(R.drawable.ic_delete)
+            setPadding(16, 16, 16, 16)
+        }
+
+        openTv.setOnClickListener {
+            showTimePicker { display, minutes ->
+                openTv.text = display
+                slot.open = minutes
+            }
+        }
+
+        closeTv.setOnClickListener {
+            showTimePicker { display, minutes ->
+                closeTv.text = display
+                slot.close = minutes
+            }
+        }
+
+        delete.setOnClickListener {
+            slots.remove(slot)
+            container.removeView(row)
+        }
+
+        row.addView(openTv)
+        row.addView(dash)
+        row.addView(closeTv)
+        row.addView(delete)
+
+        container.addView(row)
+    }
+    private fun showTimePicker(
+        onResult: (display: String, minutes: Int) -> Unit
+    ) {
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val h24 = picker.hour
+            val m = picker.minute
+
+            val minutes = h24 * 60 + m
+
+            val h12 = when {
+                h24 == 0 -> 12
+                h24 > 12 -> h24 - 12
+                else -> h24
+            }
+            val ampm = if (h24 < 12) "AM" else "PM"
+
+            onResult(
+                String.format("%d:%02d %s", h12, m, ampm),
+                minutes
+            )
+        }
+
+        picker.show(supportFragmentManager, "TIME_PICKER")
+    }
+    fun validateHoliday(
+        newHoliday: FormViewModel.HolidayException,
+        existing: List<FormViewModel.HolidayException>
+    ): String? {
+
+        if (newHoliday.name.isBlank()) {
+            return "Please enter holiday name"
+        }
+
+        if (newHoliday.date.isBlank()) {
+            return "Please select holiday date"
+        }
+
+        // duplicate date
+        if (existing.any { it.date == newHoliday.date }) {
+            return "Holiday already exists for this date"
+        }
+
+        // mode validation
+        if (newHoliday.isClosed || newHoliday.isOpen24Hours) {
+            if (newHoliday.slots.isNotEmpty()) {
+                return "Custom hours not allowed for Closed / 24 hours"
+            }
+            return null
+        }
+
+        // custom slots
+        return validateSlots(newHoliday.slots)
+    }
+
+    fun validateSlots(slots: List<FormViewModel.TimeSlot>): String? {
+
+        if (slots.isEmpty()) {
+            return "Please add at least one time slot"
+        }
+
+        // open < close
+        slots.forEachIndexed { index, s ->
+            if (s.open >= s.close) {
+                return "Invalid time in slot ${index + 1} (Open must be before Close)"
+            }
+        }
+
+        // overlap check
+        val sorted = slots.sortedBy { it.open }
+        for (i in 0 until sorted.size - 1) {
+            if (sorted[i].close > sorted[i + 1].open) {
+                return "Time slots must not overlap"
+            }
+        }
+
+        return null
+    }
+
+
+    fun validateSeasonal(
+        newSeason: FormViewModel.SeasonalHours,
+        existing: List<FormViewModel.SeasonalHours>
+    ): String? {
+
+        if (newSeason.name.isBlank()) {
+            return "Please enter season name"
+        }
+
+        if (newSeason.startDate.isBlank() || newSeason.endDate.isBlank()) {
+            return "Please select start & end date"
+        }
+
+        val start = parseDate(newSeason.startDate)
+        val end = parseDate(newSeason.endDate)
+
+        if (start > end) {
+            return "Start date must be before end date"
+        }
+
+        // overlap check
+        existing.forEach { s ->
+            val sStart = parseDate(s.startDate)
+            val sEnd = parseDate(s.endDate)
+
+            if (start <= sEnd && end >= sStart) {
+                return "Season overlaps with existing season (${s.name})"
+            }
+        }
+
+        // mode validation
+        if (newSeason.isClosed || newSeason.isOpen24Hours) {
+            if (newSeason.slots.isNotEmpty()) {
+                return "Custom hours not allowed for Closed / 24 hours"
+            }
+            return null
+        }
+
+        return validateSlots(newSeason.slots)
+    }
+    private fun parseDate(date: String): Long {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        sdf.isLenient = false
+        return sdf.parse(date)?.time
+            ?: throw IllegalArgumentException("Invalid date: $date")
+    }
+
+
+    private fun startSubPoiBulkUpload() {
+        vm.submitBulkSubPOIAfterMainPOI()
+    }
+
+
+    private fun startSubPoiSubmission() {
+        val list = vm.valuesLive.value?.get("addSubPois") as? List<*>
+            ?: emptyList<Map<String, Any?>>()
+
+        if (list.isEmpty()) return
+
+        totalSubPoiCount = list.size
+        currentSubPoiIndex = 0
+
+        submitCurrentSubPoi()
+    }
+
+    private fun submitCurrentSubPoi() {
+        // 👉 Tell ViewModel which Sub-POI to submit
+        vm.currentSubPoiIndex = currentSubPoiIndex
+
+        vm.submitBulkSubPOIAfterMainPOI()
+    }
+
+
+
+
+
+    // -------------------------------
+    // Gallery picker
+    // -------------------------------
+    private val pickImages =
+        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+
+            if (uris.isEmpty() || currentPhotoFieldId == null) return@registerForActivityResult
+
+            val fieldId = currentPhotoFieldId!!
+            val appContext = applicationContext
+
+            // ✅ Existing metadata (already saved)
+            val existing = vm.getPhotoMetadata(fieldId).toMutableList()
+
+            // ✅ Existing file URIs (avoid duplicates)
+            val existingUriSet = existing.map { it.uri }.toSet()
+
+            // ✅ Convert picked content:// → file://
+            uris.forEach { pickedUri ->
+                val fileUri = copyUriToInternalFile(appContext, pickedUri)
+                    ?: return@forEach
+
+                val fileUriStr = fileUri.toString()
+
+                if (!existingUriSet.contains(fileUriStr)) {
+                    existing.add(
+                        PhotoWithMeta(
+                            uri = fileUriStr,     // ✅ ALWAYS file://
+                            label = "",
+                            description = "",
+                            latitude = 0.0,
+                            longitude = 0.0
+                        )
+                    )
+                }
+            }
+
+            // ✅ Open metadata screen with MERGED list
+            val intent = Intent(this, PhotoMetadataActivity::class.java).apply {
+                putExtra("fieldId", fieldId)
+                putParcelableArrayListExtra("photos", ArrayList(existing))
+            }
+
+            photoMetaLauncher.launch(intent)
+        }
+
+
+
+
+
+    private fun copyUriToInternalFile(context: Context, uri: Uri): Uri? {
+        return try {
+            val input = context.contentResolver.openInputStream(uri) ?: return null
+            val file = File(
+                context.filesDir,
+                "photo_${System.currentTimeMillis()}.jpg"
+            )
+
+            input.use { inputStream ->
+                file.outputStream().use { output ->
+                    inputStream.copyTo(output)
+                }
+            }
+
+            Uri.fromFile(file) // ✅ file:// URI
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+
+
+    private val photoMetaLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+
+            val data = result.data ?: return@registerForActivityResult
+            val fieldId = data.getStringExtra("fieldId") ?: return@registerForActivityResult
+
+            val updatedList =
+                data.getParcelableArrayListExtra<PhotoWithMeta>("result") ?: return@registerForActivityResult
+
+            //  Save FULL merged metadata
+            vm.savePhotoMetadata(fieldId, updatedList)
+
+            //  Update form only with URIs (adapter expects this)
+            val uriStrings = updatedList.map { it.uri }
+
+            vm.updateValue(fieldId, uriStrings)
+            vm.notifyFieldChanged(fieldId)
+        }
+
+
 
 
 

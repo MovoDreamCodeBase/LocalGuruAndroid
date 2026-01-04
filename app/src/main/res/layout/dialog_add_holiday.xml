@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add Holiday"
+            android:fontFamily="@font/dm_sans_bold"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:paddingBottom="12dp" />
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Holiday name"
+            android:fontFamily="@font/dm_sans_regular"
+            android:padding="12dp"
+            android:maxLength="55"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:background="@drawable/bg_input_bordered"
+            android:textSize="14sp"
+            android:layout_marginBottom="12dp"/>
+        <!-- Date -->
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:text="Select Date"
+            android:fontFamily="@font/dm_sans_medium"
+            android:textSize="14sp"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_bordered" />
+
+        <!-- Mode -->
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp">
+
+            <RadioButton
+                android:fontFamily="@font/dm_sans_regular"
+                android:id="@+id/rbClosed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Closed" />
+
+            <RadioButton
+                android:id="@+id/rb24Hours"
+                android:fontFamily="@font/dm_sans_regular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open 24 hours" />
+
+            <RadioButton
+                android:id="@+id/rbCustom"
+                android:fontFamily="@font/dm_sans_regular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Custom hours" />
+        </RadioGroup>
+
+        <!-- Slots -->
+        <LinearLayout
+            android:id="@+id/slotContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp" />
+
+        <!-- Add Slot -->
+        <TextView
+            android:fontFamily="@font/dm_sans_bold"
+            android:id="@+id/btnAddSlot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Add hours"
+            android:textSize="14sp"
+            android:textColor="@color/colorPrimary"
+            android:paddingTop="8dp" />
+
+        <!-- Actions -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/btnCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:fontFamily="@font/dm_sans_medium"
+                android:textColor="@android:color/black"
+                android:padding="@dimen/_12sdp"/>
+
+            <TextView
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save"
+
+                android:background="@drawable/bg_button_pink"
+                android:fontFamily="@font/dm_sans_medium"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:paddingVertical="@dimen/_6sdp"
+                android:paddingHorizontal="@dimen/_24sdp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

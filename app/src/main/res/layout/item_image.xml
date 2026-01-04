@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView
+        android:layout_marginBottom="@dimen/_8sdp"
+    android:id="@+id/imgItem"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/_200sdp"
+    android:scaleType="centerCrop" />
+
+
+</layout>
+

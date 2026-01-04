@@ -1,0 +1,68 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- MAP -->
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- FIXED PIN (center) -->
+    <ImageView
+        android:id="@+id/imgPin"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_map_pin"
+        android:layout_gravity="center"
+        android:translationY="-24dp" />
+
+    <!-- ADDRESS CARD (BOTTOM) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/addressCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="@dimen/_55sdp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="12dp"
+        app:cardUseCompatPadding="true">
+
+        <TextView
+            android:id="@+id/addressTxt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fetching precise location..."
+            android:textSize="15sp"
+            android:fontFamily="@font/dm_sans_regular"
+            android:textColor="@android:color/black"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </com.google.android.material.card.MaterialCardView>
+
+
+
+
+<androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnSelectLocation"
+        android:text="@string/use_this_location"
+        android:layout_marginHorizontal="16dp"
+    android:layout_marginBottom="@dimen/_16sdp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/dm_sans_bold"
+        android:textAllCaps="false"
+        android:background="@drawable/bg_button_pink"
+        android:textColor="@android:color/white"
+        android:layout_gravity="bottom"/>
+
+</FrameLayout>

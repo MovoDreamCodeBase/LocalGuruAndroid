@@ -19,6 +19,11 @@
     <string name="gallery_photos">Gallery Photos</string>
     <string name="share">Share</string>
     <string name="Update">Update</string>
-    <string name="add_poi">Add POI</string>
+    <string name="add_poi">Create POI</string>
     <string name="add_sub_poi">Add Sub POI</string>
+    <string name="sub_pois">Sub POIs</string>
+    <string name="select_days_and_time">Select days and time</string>
+    <string name="edit_hours">Edit hours</string>
+    <string name="preview">Preview</string>
+    <string name="logout">Logout</string>
 </resources>

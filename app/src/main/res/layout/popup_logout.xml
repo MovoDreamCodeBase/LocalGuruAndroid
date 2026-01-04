@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_popup"
+    android:paddingHorizontal="12dp"
+
+    android:elevation="@dimen/_4sdp">
+
+    <TextView
+        android:id="@+id/tvLogout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/logout"
+        android:fontFamily="@font/dm_sans_medium"
+        android:textSize="@dimen/_14ssp"
+        android:textColor="@color/colorRed"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"/>
+</LinearLayout>

@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Big POI Pin (Left) -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M10,2C7.24,2 5,4.24 5,7c0,4.25 5,9 5,9s5,-4.75 5,-9c0,-2.76 -2.24,-5 -5,-5zM10,9.5c-1.38,0 -2.5,-1.12 -2.5,-2.5S8.62,4.5 10,4.5s2.5,1.12 2.5,2.5S11.38,9.5 10,9.5z"/>
+
+    <!-- Base Line under Big Pin -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M7,17h6v1.6H7z"/>
+
+    <!-- Small POI Pin (Right and slightly lower) -->
+    <group android:translateX="7" android:translateY="4">
+        <path
+            android:fillColor="#2196F3"
+            android:pathData="M10,2C7.79,2 6,3.79 6,6c0,3 4,7 4,7s4,-4 4,-7c0,-2.21 -1.79,-4 -4,-4zM10,7.2c-0.66,0 -1.2,-0.54 -1.2,-1.2 0,-0.66 0.54,-1.2 1.2,-1.2 0.66,0 1.2,0.54 1.2,1.2 0,0.66 -0.54,1.2 -1.2,1.2z"/>
+    </group>
+
+</vector>

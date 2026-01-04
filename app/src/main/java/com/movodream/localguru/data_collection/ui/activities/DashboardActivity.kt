@@ -4,15 +4,23 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.core.R
 import com.core.base.BaseActivity
+import com.core.constants.AppConstants
 import com.core.customviews.CustomDialogBuilder
+import com.core.preferences.MyPreference
+import com.core.preferences.PrefKey
 import com.core.utils.DebugLog
 import com.core.utils.PermissionUtils
 import com.core.utils.Utils
@@ -23,10 +31,10 @@ import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.presentation.DashboardViewModel
 import com.movodream.localguru.data_collection.ui.adapter.DashboardPagerAdapter
 import com.movodream.localguru.databinding.ActivityDashboardBinding
+import com.movodream.localguru.login.ui.LoginActivity
 import com.network.client.ResponseHandler
 import com.network.model.ResponseData
 import com.network.model.ResponseListData
-import org.json.JSONObject
 import java.io.File
 
 
@@ -116,6 +124,10 @@ class DashboardActivity : BaseActivity() {
 
         binding.bottomNav.selectItem(0)
 
+        binding.cvProfile.setOnClickListener {
+         showLogoutTooltip(binding.cvProfile)
+        }
+
     }
 
     private fun onSelectedTab(tabId : Int){
@@ -175,7 +187,7 @@ class DashboardActivity : BaseActivity() {
                              binding.llDashboard.visibility = View.VISIBLE
                              setAdapters()
                              binding.dashboard = state.response!!.data
-                          dashboardViewModel.mapDashboardData(state.response!!.data!!)
+                          dashboardViewModel.mapDashboardData(state.response!!.data!!,)
 
                              checkLocationPermissionAndStart()
 
@@ -226,19 +238,19 @@ class DashboardActivity : BaseActivity() {
                     }
 
 
-                    is ResponseHandler.OnSuccessResponse<ResponseListData<RevisionDataResponse>?> -> {
+                    is ResponseHandler.OnSuccessResponse<ResponseData<RevisionDataResponse>?> -> {
 
                         state.response?.let {
                             Utils.hideProgressDialog()
-                            if(state.response!!.data!=null  && state.response!!.data!!.size>0 && state.response!!.data!![0].poiDetails!=null&& state.response!!.data!![0].poiDetails.isNotEmpty() ){
+                            if(state.response!!.data!=null  && state.response!!.data!!.poiDetails!=null&& state.response!!.data!!.poiDetails.isNotEmpty() ){
 
                                 var galleryPhotos = ""
-                                if(state.response!!.data!![0].galleryPhotos!=null&&state.response!!.data!![0].poiDetails.isNotEmpty()){
-                                    galleryPhotos = state.response!!.data!![0].galleryPhotos
+                                if(state.response!!.data!!.galleryPhotos!=null&&state.response!!.data!!.poiDetails.isNotEmpty()){
+                                    galleryPhotos = state.response!!.data!!.galleryPhotos
                                 }
                                 dashboardViewModel.saveServerPoiDetailsAsDraft(
                                     poiId = selectedPOI.poiId.toString(),
-                                    poiDetailsString = state.response!!.data!![0].poiDetails,galleryPhotos // <-- String from API
+                                    poiDetailsString = state.response!!.data!!.poiDetails,galleryPhotos // <-- String from API
                                 ) {
                                    callDynamicFormScrren(true)
                                 }
@@ -292,24 +304,30 @@ class DashboardActivity : BaseActivity() {
                     }
 
 
-                    is ResponseHandler.OnSuccessResponse<ResponseListData<RevisionDataResponse>?> -> {
+                    is ResponseHandler.OnSuccessResponse<ResponseData<RevisionDataResponse>?> -> {
 
                         state.response?.let {
                             Utils.hideProgressDialog()
-                            if(state.response!!.data!=null&& state.response!!.data!!.size>0 && state.response!!.data!![0].poiDetails!=null&& state.response!!.data!![0].poiDetails.isNotEmpty() ){
+                            if(state.response!!.data!=null ){
 
                                 var galleryPhotos = ""
-                                if(state.response!!.data!![0].galleryPhotos!=null&&state.response!!.data!![0].poiDetails.isNotEmpty()){
-                                    galleryPhotos = state.response!!.data!![0].galleryPhotos
+                                if(state.response!!.data!!.galleryPhotos!=null&&state.response!!.data!!.galleryPhotos.isNotEmpty()){
+                                    galleryPhotos = state.response!!.data!!.galleryPhotos
                                 }
+                                val subPOIList = ArrayList(
+                                    state.response?.data
+                                        ?.subPoiRecords
+                                        ?: emptyList()
+                                )
 
                                 if(isFromShare){
-                                  dashboardViewModel.prepareShareText(state.response!!.data!![0].poiDetails)
+                                  dashboardViewModel.prepareShareText(state.response!!.data!!.poiDetails)
                                 }else{
                                     val intent = Intent(this, PoiDetailsActivity::class.java)
-                                    intent.putExtra("poiDetails", state.response!!.data!![0].poiDetails)      // the "poiDetails" string
+                                    intent.putExtra("poiDetails", state.response!!.data!!.poiDetails)      // the "poiDetails" string
                                     intent.putExtra("galleryPhotos", galleryPhotos) // the "galleryPhotos" string
                                     intent.putExtra("KEY_POI", selectedPOI) // the "galleryPhotos" string
+                                    intent.putParcelableArrayListExtra("KEY_SUB_POI", subPOIList) // the "galleryPhotos" string
                                     startActivity(intent)
                                 }
 
@@ -372,6 +390,55 @@ class DashboardActivity : BaseActivity() {
         this.selectedPOI = selectedPOI
         dashboardViewModel.callPOIDetails(agentId!!,""+selectedPOI!!.poiId)
     }
+
+    fun callAddPOIScreen(data: FormSchema, isFromPOI: Boolean) {
+        if(dashboardViewModel.tasks.value!=null && dashboardViewModel.tasks.value!!.isNotEmpty()){
+            val assignedTaskList : List<TaskItem> = dashboardViewModel.tasks.value!!
+           val completedTaskList =  assignedTaskList.filter { it.taskStatus == AppConstants.TAB_COMPLETED }
+
+            if(isFromPOI){
+                val intent =
+                    Intent(this@DashboardActivity, AddPoiSubPoiFormActivity::class.java)
+                intent.putExtra("KEY_SCHEMA", data)
+                intent.putExtra("KEY_IS_ADD_POI", isFromPOI)
+                intent.putParcelableArrayListExtra(
+                    "KEY_POI",
+                    ArrayList(assignedTaskList)
+                )
+
+                launcherSelect.launch(intent)
+            }else {
+                if (completedTaskList != null && completedTaskList.isNotEmpty()) {
+                    val intent =
+                        Intent(this@DashboardActivity, AddPoiSubPoiFormActivity::class.java)
+                    intent.putExtra("KEY_SCHEMA", data)
+                    intent.putExtra("KEY_IS_ADD_POI", isFromPOI)
+                    intent.putParcelableArrayListExtra(
+                        "KEY_POI",
+                        ArrayList(completedTaskList)
+                    )
+
+                    launcherSelect.launch(intent)
+                } else {
+
+                    CustomDialogBuilder(this)
+                        .setTitle("Error")
+                        .setMessage(
+                            "Please complete at least one POI before adding Sub-POI details"
+                        )
+                        .setPositiveButton("OK") {
+
+
+                        }
+
+                        .setCancelable(false)
+                        .show()
+                }
+            }
+
+        }
+    }
+
     private fun checkLocationPermissionAndStart() {
 
         if (permissionUtils.isLocationPermissionGranted(this)) {
@@ -428,6 +495,7 @@ class DashboardActivity : BaseActivity() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
+            binding.bottomNav.selectItem(0)
          callDashboardAPI()
         }
     }
@@ -485,6 +553,52 @@ class DashboardActivity : BaseActivity() {
 
 
 
+
+
+    private fun showLogoutTooltip(anchorView: View) {
+        val popupView = layoutInflater.inflate(com.movodream.localguru.R.layout.popup_logout, null)
+
+        val popupWindow = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+
+        popupWindow.isOutsideTouchable = true
+        popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        popupWindow.elevation = 20f
+
+        // Convert dp to px
+        val marginTop = dpToPx(8)
+        val marginEnd = dpToPx(8)
+
+        // Show popup with margin offsets
+        popupWindow.showAsDropDown(
+            anchorView,
+            -marginEnd,   // move left from end
+            marginTop     // move down from top
+        )
+
+        popupView.findViewById<TextView>(com.movodream.localguru.R.id.tvLogout).setOnClickListener {
+            popupWindow.dismiss()
+            performLogout()
+        }
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
+
+
+    private fun performLogout() {
+        MyPreference.setValueString(PrefKey.PHONE_NUMBER,"")
+        MyPreference.setValueString(PrefKey.LOGIN_DATE,"")
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+
+    }
 
 
 }

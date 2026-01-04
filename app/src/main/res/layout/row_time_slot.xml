@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="@dimen/_16sdp"
+    android:paddingEnd="@dimen/_16sdp"
+    android:paddingTop="@dimen/_12sdp"
+    android:paddingBottom="@dimen/_12sdp">
+
+    <!-- Day label -->
+    <TextView
+        android:id="@+id/tvDay"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Monday"
+        android:textSize="@dimen/_14ssp"
+        android:textColor="@android:color/black"
+        android:fontFamily="@font/dm_sans_medium"
+        tools:text="Monday" />
+
+    <!-- Status -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Closed"
+        android:textSize="@dimen/_13ssp"
+        android:textColor="@color/colorDarkGrey"
+        android:fontFamily="@font/dm_sans_regular"
+        android:layout_marginEnd="@dimen/_8sdp"
+        tools:text="9:30 am – 6:30 pm" />
+
+    <!-- Edit icon -->
+    <ImageView
+        android:id="@+id/ivEdit"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:src="@drawable/ic_edit_hours"
+        app:tint="@color/colorSkyBlue"
+        android:contentDescription="@string/edit_hours" />
+
+</LinearLayout>
