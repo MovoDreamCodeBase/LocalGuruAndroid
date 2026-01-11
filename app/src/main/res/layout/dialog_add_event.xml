@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:background="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- ========================= -->
+        <!-- TITLE -->
+        <!-- ========================= -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add Event"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/dm_sans_bold"
+            android:textColor="@android:color/black"
+            android:paddingBottom="12dp" />
+
+        <!-- ========================= -->
+        <!-- EVENT NAME -->
+        <!-- ========================= -->
+        <EditText
+            android:id="@+id/etEventName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Event name (e.g. Light and Sound Show)"
+            android:fontFamily="@font/dm_sans_regular"
+            android:padding="12dp"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:maxLength="80"
+            android:background="@drawable/bg_input_bordered"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textColorHint="#8A8A8A"
+            android:cursorVisible="true"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ========================= -->
+        <!-- EVENT DESCRIPTION (NEW) -->
+        <!-- ========================= -->
+        <EditText
+            android:id="@+id/etEventDescription"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="Event description (what happens, guidelines, highlights)"
+            android:fontFamily="@font/dm_sans_regular"
+            android:padding="12dp"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:maxLength="300"
+            android:background="@drawable/bg_input_bordered"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textColorHint="#8A8A8A"
+
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ========================= -->
+        <!-- EVENT DATE -->
+        <!-- ========================= -->
+        <TextView
+            android:id="@+id/tvEventDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:text="Select Event Date"
+            android:textSize="14sp"
+            android:fontFamily="@font/dm_sans_regular"
+            android:padding="12dp"
+            android:textColor="@android:color/black"
+            android:textColorHint="#8A8A8A"
+            android:background="@drawable/bg_input_bordered"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ========================= -->
+        <!-- TIME SLOTS -->
+        <!-- ========================= -->
+        <LinearLayout
+            android:id="@+id/slotContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/btnAddSlot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Add hours"
+            android:textSize="14sp"
+            android:fontFamily="@font/dm_sans_bold"
+            android:textColor="@color/colorPrimary"
+            android:paddingTop="8dp" />
+
+        <!-- ========================= -->
+        <!-- ACTIONS -->
+        <!-- ========================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/btnCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:fontFamily="@font/dm_sans_medium"
+                android:textColor="@android:color/black"
+                android:padding="12dp"/>
+
+            <TextView
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save"
+                android:background="@drawable/bg_button_pink"
+                android:fontFamily="@font/dm_sans_medium"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="24dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

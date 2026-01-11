@@ -46,7 +46,7 @@ class LoginActivity : AppCompatActivity() {
         } catch (e: Exception) {
             "N/A"
         }
-         binding.tvVersion.text = "Version + $versionName"
+         binding.tvVersion.text = "Version $versionName"
 
 
     }

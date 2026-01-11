@@ -57,11 +57,18 @@ class DynamicFormAdapter(
     private val onAddSeasonal: () -> Unit,
     private val onRemoveHoliday: (index: Int) -> Unit,
     private val onRemoveSeason: (index: Int) -> Unit,
-    private val onRequestRebind: (String) -> Unit
+    private val onRequestRebind: (String) -> Unit,
+    private val onAddEvent:()->Unit,
+    private val onRemoveEvent:(FormViewModel.Event)->Unit,
+    private val onAddFacility: (fieldId: String,title : String) -> Unit,
+    private val onRemoveFacility: (fieldId: String, item: FormViewModel.FacilityPoint) -> Unit,
+    private val onAddAddress: (fieldId: String,title : String) -> Unit,
+    private val onRemoveAddress: (fieldId: String, item: FormViewModel.SecondaryAddress) -> Unit,
 
 
 
-) : RecyclerView.Adapter<DynamicFormAdapter.FieldVH>() {
+
+    ) : RecyclerView.Adapter<DynamicFormAdapter.FieldVH>() {
 
     private var fields: List<FieldSchema> = emptyList()
     private var values: Map<String, Any?> = emptyMap()
@@ -84,7 +91,7 @@ class DynamicFormAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FieldVH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_field_container, parent, false)
-        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto,onAddNotification,onRemoveNotification,onPreviewPhotos,onAddSubPoi,onRemoveSubPoi,onOperationalHoursChanged,onAddHoliday,onAddSeasonal,onRemoveHoliday,onRemoveSeason,onRequestRebind)
+        return FieldVH(v, onTakePhoto, onPickImages, onRequestLocation, onFieldChanged,onRemovePhoto,onAddNotification,onRemoveNotification,onPreviewPhotos,onAddSubPoi,onRemoveSubPoi,onOperationalHoursChanged,onAddHoliday,onAddSeasonal,onRemoveHoliday,onRemoveSeason,onRequestRebind,onAddEvent,onRemoveEvent,onAddFacility, onRemoveFacility,onAddAddress,onRemoveAddress  )
     }
 
     override fun onBindViewHolder(holder: FieldVH, position: Int) {
@@ -114,8 +121,13 @@ class DynamicFormAdapter(
         private val onAddSeasonal: () -> Unit,
         private val onRemoveHoliday: (index: Int) -> Unit,
         private val onRemoveSeason: (index: Int) -> Unit,
-        private val onRequestRebind: (String) -> Unit
-
+        private val onRequestRebind: (String) -> Unit,
+        private val onAddEvent:()->Unit,
+        private val onRemoveEvent:(FormViewModel.Event)->Unit,
+        private val onAddFacility: (fieldId: String,title : String) -> Unit,
+        private val onRemoveFacility: (fieldId: String, item: FormViewModel.FacilityPoint) -> Unit,
+        private val onAddAddress: (fieldId: String,title : String) -> Unit,
+        private val onRemoveAddress: (fieldId: String, item: FormViewModel.SecondaryAddress) -> Unit,
 
 
 
@@ -1489,6 +1501,282 @@ class DynamicFormAdapter(
                     host.addView(container)
                 }
 
+                "event_list" -> {
+                    val ctx = itemView.context
+                    val vertical = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL
+                    }
+
+                    val btnAdd = TextView(ctx).apply {
+                        text = field.addButtonLabel ?: "Add Event"
+                        textSize = 14f
+                        gravity = Gravity.CENTER
+                        setPadding(24, 12, 24, 12)
+                        background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                        setTextColor(Color.WHITE)
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            gravity = Gravity.START      // button aligns right
+                            bottomMargin = 12.dpToPx(ctx)
+                        }
+                        setOnClickListener { onAddEvent() }
+                    }
+
+
+                    vertical.addView(btnAdd)
+
+                    val list =
+                        (value as? List<FormViewModel.Event>) ?: emptyList()
+
+                    list.forEach { e ->
+                        val row = LinearLayout(ctx).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            gravity = Gravity.CENTER_VERTICAL
+                        }
+
+                        val tv = TextView(ctx).apply {
+                            text = "${e.name} • ${e.date}"
+                            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+                        }
+
+                        val del = ImageView(ctx).apply {
+                            setImageResource(R.drawable.ic_delete)
+                            setOnClickListener { onRemoveEvent(e) }
+                        }
+
+                        row.addView(tv)
+                        row.addView(del)
+                        vertical.addView(row)
+                    }
+
+                    host.addView(vertical)
+                }
+// ======================================================
+// FACILITY LIST (Parking / Washroom / Drinking Water)
+// ======================================================
+                "facility_list" -> {
+
+                    val ctx = itemView.context
+                    val vertical = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL
+                    }
+
+                    // ---------------------------
+                    // ADD BUTTON
+                    // ---------------------------
+                    val btnAdd = TextView(ctx).apply {
+                        text = field.addButtonLabel ?: "Add"
+                        textSize = 14f
+                        setPadding(24, 12, 24, 12)
+                        background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                        setTextColor(Color.WHITE)
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            bottomMargin = 12.dpToPx(ctx)
+                        }
+
+                        setOnClickListener {
+                            onAddFacility(field.id,field.label)   //  open bottomsheet
+                        }
+                    }
+
+                    vertical.addView(btnAdd)
+
+                    // ---------------------------
+                    // EXISTING LIST
+                    // ---------------------------
+                    val list =
+                        (value as? List<FormViewModel.FacilityPoint>) ?: emptyList()
+
+                    list.forEach { item ->
+
+                        val row = LinearLayout(ctx).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            gravity = Gravity.CENTER_VERTICAL
+                            background = ContextCompat.getDrawable(ctx, R.drawable.bg_input_bordered)
+                            setPadding(16.dpToPx(ctx), 12.dpToPx(ctx), 16.dpToPx(ctx), 12.dpToPx(ctx))
+                        }
+
+                        val tv = TextView(ctx).apply {
+                            text = item.label
+                            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+                            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+                            textSize = 14f
+                        }
+
+                        val delete = ImageView(ctx).apply {
+                            setImageResource(R.drawable.ic_delete)
+                            setOnClickListener {
+                                onRemoveFacility(field.id, item)
+                            }
+                        }
+
+                        row.addView(tv)
+                        row.addView(delete)
+                        vertical.addView(row)
+                    }
+
+                    host.addView(vertical)
+                }
+                "address_list" -> {
+
+                    val ctx = itemView.context
+                    val vertical = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL
+                    }
+
+                    // ---------------------------
+                    // ADD BUTTON
+                    // ---------------------------
+                    val btnAdd = TextView(ctx).apply {
+                        text = field.addButtonLabel ?: "Add"
+                        textSize = 14f
+                        setPadding(24, 12, 24, 12)
+                        background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
+                        setTextColor(Color.WHITE)
+                        typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            bottomMargin = 12.dpToPx(ctx)
+                        }
+
+                        setOnClickListener {
+                            onAddAddress(field.id,field.label)   //  open bottomsheet
+                        }
+                    }
+
+                    vertical.addView(btnAdd)
+
+                    // ---------------------------
+                    // EXISTING LIST
+                    // ---------------------------
+                    val list =
+                        (value as? List<FormViewModel.SecondaryAddress>) ?: emptyList()
+
+                    list.forEach { item ->
+
+                        val row = LinearLayout(ctx).apply {
+                            orientation = LinearLayout.HORIZONTAL
+                            gravity = Gravity.CENTER_VERTICAL
+                            background = ContextCompat.getDrawable(ctx, R.drawable.bg_input_bordered)
+                            setPadding(16.dpToPx(ctx), 12.dpToPx(ctx), 16.dpToPx(ctx), 12.dpToPx(ctx))
+                        }
+
+                        val tv = TextView(ctx).apply {
+                            text = item.address
+                            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+                            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+                            textSize = 14f
+                        }
+
+                        val delete = ImageView(ctx).apply {
+                            setImageResource(R.drawable.ic_delete)
+                            setOnClickListener {
+                                onRemoveAddress(field.id, item)
+                            }
+                        }
+
+                        row.addView(tv)
+                        row.addView(delete)
+                        vertical.addView(row)
+                    }
+
+                    host.addView(vertical)
+                }
+                "source_verification" -> {
+
+                    val ctx = itemView.context
+                    val container = LinearLayout(ctx).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(8.dpToPx(ctx), 8.dpToPx(ctx), 8.dpToPx(ctx), 8.dpToPx(ctx))
+                    }
+
+                    // Current value from ViewModel
+                    val selectedList =
+                        (value as? MutableList<FormViewModel.SourceVerification>)
+                            ?: mutableListOf<FormViewModel.SourceVerification>().also {
+                                onFieldChanged(field.id, it)
+                            }
+
+                    field.options.forEach { opt ->
+
+                        val row = LinearLayout(ctx).apply {
+                            orientation = LinearLayout.VERTICAL
+                            setPadding(0, 8.dpToPx(ctx), 0, 8.dpToPx(ctx))
+                        }
+
+                        // Checkbox
+                        val cb = CheckBox(ctx).apply {
+                            text = opt.label
+                            isChecked = selectedList.any { it.source == opt.value }
+                            textSize = 13f
+                            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_medium)
+                            setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
+                            buttonTintList = ContextCompat.getColorStateList(ctx, R.color.checkbox_tint)
+                            setPadding(8, 8, 8, 8)
+                        }
+
+                        // Comment box (hidden initially)
+                        val etComment = EditText(ctx).apply {
+                            hint = "Enter comment for ${opt.label}"
+                            background = ctx.getDrawable(R.drawable.bg_input_bordered)
+                            typeface = ResourcesCompat.getFont(ctx, com.core.R.font.dm_sans_regular)
+                            textSize = 14f
+                            setPadding(24, 36, 24, 36)
+                            visibility = View.GONE
+                            setText(
+                                selectedList.firstOrNull { it.source == opt.value }?.comment.orEmpty()
+                            )
+                        }
+
+                        // Checkbox toggle logic
+                        cb.setOnCheckedChangeListener { _, checked ->
+
+                            if (checked) {
+                                val item = FormViewModel.SourceVerification(opt.value, "")
+                                selectedList.add(item)
+                                etComment.visibility = View.VISIBLE
+                            } else {
+                                selectedList.removeAll { it.source == opt.value }
+                                etComment.visibility = View.GONE
+                                etComment.setText("")
+                            }
+
+                            onFieldChanged(field.id, selectedList)
+                        }
+
+                        // Comment typing
+                        etComment.doAfterTextChanged {
+                            selectedList
+                                .firstOrNull { it.source == opt.value }
+                                ?.comment = it?.toString().orEmpty()
+
+                            onFieldChanged(field.id, selectedList)
+                        }
+
+                        // Restore visibility if already checked
+                        if (cb.isChecked) {
+                            etComment.visibility = View.VISIBLE
+                        }
+
+                        row.addView(cb)
+                        row.addView(etComment)
+                        container.addView(row)
+                    }
+
+                    host.addView(container)
+                }
 
                 // existing cases...
 

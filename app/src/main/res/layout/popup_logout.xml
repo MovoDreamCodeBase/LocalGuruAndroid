@@ -9,7 +9,29 @@
     android:elevation="@dimen/_4sdp">
 
     <TextView
+        android:layout_marginVertical="@dimen/_4sdp"
+        android:id="@+id/tvMasterRefresh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Refresh Category Master"
+        android:fontFamily="@font/dm_sans_medium"
+        android:textSize="@dimen/_14ssp"
+        android:textColor="@color/black"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <View
+        android:layout_margin="@dimen/_4sdp"
+        android:background="@color/colorGrey"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_1sdp"/>
+
+    <TextView
+        android:gravity="center"
+        android:layout_gravity="center"
         android:id="@+id/tvLogout"
+        android:layout_marginVertical="@dimen/_4sdp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/logout"

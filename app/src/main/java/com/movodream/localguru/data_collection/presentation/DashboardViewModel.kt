@@ -19,6 +19,7 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.movodream.localguru.R
+import com.movodream.localguru.data_collection.model.FormSchema
 import com.movodream.localguru.data_collection.model.SummaryItem
 import com.movodream.localguru.data_collection.model.TaskItem
 import com.movodream.localguru.data_collection.repository.CategoryResult
@@ -35,7 +36,7 @@ import org.json.JSONObject
 
 class DashboardViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val repository = DashboardRepository()
+
 
     private val _tasks = MutableLiveData<List<TaskItem>>()
     val tasks: LiveData<List<TaskItem>> = _tasks
@@ -69,6 +70,12 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
     private val draftRepository by lazy {
         DraftRepository(database.draftDao())
     }
+
+    private val repository by lazy {
+        DashboardRepository(database)
+    }
+
+
     init {
         _tasks.value = emptyList()
         _dashboardTasks.value = emptyList()
@@ -82,9 +89,13 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
     // --------------------------------------------------------
     //  Convert AgentTaskResponse → TaskItem + SummaryItem
     // --------------------------------------------------------
-    fun mapDashboardData(data: AgentTaskResponse) {
+  suspend  fun mapDashboardData(data: AgentTaskResponse) {
         // Summary mapping
 
+        val poiIds = data.assignedPOIs.map { it.poiId.toString() }
+
+        // 🔥 Draft progress from Room
+        val draftProgressMap = draftRepository.getProgressMap(poiIds)
         _summaryItems.value = data.taskSummary.map { item ->
 
             when (item.taskName.lowercase()) {
@@ -142,7 +153,8 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
             val computedProgress = when {
 
                 poi.taskStatus == "Completed" -> 100
-
+                draftProgressMap.containsKey(poi.poiId.toString()) ->
+                    draftProgressMap[poi.poiId.toString()] ?: 0
                 else -> poi.progress
             }
             TaskItem(
@@ -477,5 +489,86 @@ class DashboardViewModel(app: Application) : AndroidViewModel(app) {
             .replace("�", "")      // visual form
             .replace(Regex("[\\p{C}]"), "") // remove all non-printable control chars
     }
+    fun refreshDraftProgress(poiIds: List<String>) {
+        viewModelScope.launch {
+            val progressMap = draftRepository.getProgressMap(poiIds)
+
+            _dashboardTasks.value = _dashboardTasks.value?.map { task ->
+                val updated = progressMap[task.poiId.toString()]
+                if (updated != null) {
+                    task.copy(progress = updated)
+                } else task
+            }
+        }
+    }
+
+    fun refreshTaskDraftProgress(poiIds: List<String>) {
+        viewModelScope.launch {
+            val progressMap = draftRepository.getProgressMap(poiIds)
+
+            _filteredTasks.value = _filteredTasks.value?.map { task ->
+                val updated = progressMap[task.poiId.toString()]
+                if (updated != null) {
+                    task.copy(progress = updated)
+                } else task
+            }
+        }
+    }
+
+    sealed class MasterDownloadState {
+        object Idle : MasterDownloadState()
+        object Loading : MasterDownloadState()
+        data class Progress(val percent: Int) : MasterDownloadState()
+        object Success : MasterDownloadState()
+        data class Error(val message: String) : MasterDownloadState()
+    }
+
+    private val _masterState = MutableLiveData<MasterDownloadState>()
+    val masterState: LiveData<MasterDownloadState> get() = _masterState
+
+    fun refreshCategoryMaster() {
+
+        _masterState.value = MasterDownloadState.Loading
+
+        viewModelScope.launch {
+            val result = repository.downloadAllCategoryMaster { percent ->
+                _masterState.postValue(MasterDownloadState.Progress(percent))
+            }
+
+            _masterState.postValue(
+                if (result.isSuccess)
+                    MasterDownloadState.Success
+                else
+                    MasterDownloadState.Error(
+                        result.exceptionOrNull()?.message ?: "Download failed"
+                    )
+            )
+        }
+    }
+    fun resetMasterState() {
+        _masterState.value = MasterDownloadState.Idle
+    }
+
+    fun openCategoryFormIfAvailable(
+        categoryId: String,
+        onReady: (FormSchema) -> Unit,
+        onNeedDownload: () -> Unit
+    ) {
+        viewModelScope.launch {
+
+            // Heavy work off main thread
+            val schema = withContext(Dispatchers.IO) {
+                repository.getCachedCategorySchema(categoryId)
+            }
+
+            // Back to Main thread
+            if (schema != null) {
+                onReady(schema)
+            } else {
+                onNeedDownload()
+            }
+        }
+    }
+
 
 }

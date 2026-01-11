@@ -128,7 +128,8 @@ class DashboardFragment : Fragment(), TaskAdapter.TasksClickListener {
     override fun onActionButton1Clicked(option: TaskItem) {
         selectedPOI = option
         dashboardViewModel.setCaller("DASHBOARD")
-        dashboardViewModel.loadCategory(option.categoryId)
+       // dashboardViewModel.loadCategory(option.categoryId)
+        (activity as? DashboardActivity)?.onPOISelected(true,option)
     }
 
     override fun onActionButton2Clicked(option: TaskItem) {}

@@ -1,17 +1,22 @@
 package com.core.utils
 
+import android.Manifest
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.text.TextUtils
 import android.util.Patterns
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import com.core.R
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +30,7 @@ import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -115,7 +121,19 @@ class Utils {
                 return false
             }
         }
+        @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
+        fun isNetworkAvailable(context: Context): Boolean {
+            val connectivityManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
+            val network = connectivityManager.activeNetwork ?: return false
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(network) ?: return false
+
+            return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        }
         private fun isHardKeyboardAvailable(view: View): Boolean {
             return view.context.resources.configuration.keyboard != Configuration.KEYBOARD_NOKEYS
         }
@@ -399,7 +417,17 @@ class Utils {
             return s.contains("@") && s.contains(".")
         }
 
-
+        fun getDeviceTimeZoneId(): String {
+            return try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ZoneId.systemDefault().id
+                } else {
+                    TimeZone.getDefault().id
+                }
+            } catch (e: Exception) {
+                ""
+            }
+        }
 
         /**
          * Remove [] from Error Objects when there are multiple errors

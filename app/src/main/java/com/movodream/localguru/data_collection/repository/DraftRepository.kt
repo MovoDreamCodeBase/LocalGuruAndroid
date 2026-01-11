@@ -35,6 +35,24 @@ class DraftRepository(private val dao: DraftDao): BaseRepository() {
         return dao.hasDraft(poiId) > 0
     }
 
+
+    suspend fun getProgressMap(poiIds: List<String>): Map<String, Int> {
+        return dao.getProgressForPois(poiIds)
+            .associate { item ->
+
+                val safeProgress = item.formId
+                    .trim()
+                    .toIntOrNull()
+                    ?.coerceIn(0, 100)
+                    ?: 0
+
+                item.poiId to safeProgress
+            }
+    }
+
+
+
+
     suspend fun submitPOIData(
          body: Map<String, Any>,
     ): ResponseHandler<ResponseData<Int>?> {

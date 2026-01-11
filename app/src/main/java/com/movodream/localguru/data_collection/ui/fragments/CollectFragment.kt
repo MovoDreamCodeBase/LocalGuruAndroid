@@ -96,6 +96,7 @@ class CollectFragment : Fragment() {
         isFromPOI = true
         viewModel.setCaller("COLLECT")
         viewModel.loadCategory("ADD_POI")
+
     }
 
     private fun navigateToAddSubPoi() {

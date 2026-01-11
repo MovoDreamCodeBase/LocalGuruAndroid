@@ -6,9 +6,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Parcelable
 import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.core.utils.DebugLog
@@ -16,7 +18,11 @@ import com.core.utils.Utils
 import com.data.local.AppDatabase
 import com.data.local.entity.DraftEntity
 import com.data.remote.model.DeletePhotoRequest
+import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.OnTokenCanceledListener
 import com.movodream.localguru.data_collection.model.FieldSchema
 import com.movodream.localguru.data_collection.model.FormSchema
 import com.movodream.localguru.data_collection.model.Option
@@ -30,6 +36,7 @@ import com.network.model.ResponseListData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -63,10 +70,10 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         LocationServices.getFusedLocationProviderClient(getApplication<Application>())
     }
 
-    private val _locationFetchState = MutableLiveData<Boolean>()
+
     var _isRevisionState = MutableLiveData<Boolean>()
     var _isAddPOIState = MutableLiveData<Boolean>()
-    val locationFetchState = _locationFetchState
+
 
 
     var deleteGalleryPhoto =
@@ -86,6 +93,10 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
     val categoryOptionsLive = MutableLiveData<List<Option>>()
 
     var currentSubPoiIndex: Int = 0
+
+    private val _progressPercent = MutableLiveData<Int>()
+    val progressPercent: LiveData<Int> = _progressPercent
+
 
     private fun extractCategoryOptions(schema: FormSchema) {
         val categoryField = schema.tabs
@@ -125,6 +136,8 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         val m = valuesLive.value ?: mutableMapOf()
         m[fieldId] = value
         valuesLive.postValue(m)
+
+        calculateProgress()
     }
 
 
@@ -594,6 +607,92 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                     return@forEach
                 }
 
+                if (fieldType == "event_list" && v is List<*>) {
+
+                    val arr = JSONArray()
+
+                    v.forEach {
+                        val e = it as FormViewModel.Event
+                        val obj = JSONObject()
+
+                        obj.put("name", e.name)
+                        obj.put("description", e.eventDescription)
+                        obj.put("date", e.date)
+
+                        val slotsArr = JSONArray()
+                        e.slots.forEach { slot ->
+                            slotsArr.put(
+                                JSONObject()
+                                    .put("open", slot.open)
+                                    .put("close", slot.close)
+                            )
+                        }
+
+                        obj.put("slots", slotsArr)
+                        arr.put(obj)
+                    }
+
+                    valuesObj.put(fieldId, arr)
+                    return@forEach
+                }
+                if (fieldType == "facility_list" && v is List<*>) {
+
+                    val arr = JSONArray()
+
+                    v.forEach {
+                        val f = it as FormViewModel.FacilityPoint
+                        arr.put(
+                            JSONObject()
+                                .put("label", f.label)
+                                .put("description", f.description)
+                                .put("latitude", f.latitude)
+                                .put("longitude", f.longitude)
+                                .put("landmark", f.landmark)
+                        )
+                    }
+
+                    valuesObj.put(fieldId, arr)
+                    return@forEach
+                }
+
+                if (fieldType == "address_list" && v is List<*>) {
+
+                    val arr = JSONArray()
+
+                    v.forEach {
+                        val f = it as FormViewModel.SecondaryAddress
+                        arr.put(
+                            JSONObject()
+                                .put("address", f.address)
+                                .put("latitude", f.latitude)
+                                .put("longitude", f.longitude)
+                                .put("landmark", f.landmark)
+                        )
+                    }
+
+                    valuesObj.put(fieldId, arr)
+                    return@forEach
+                }
+                if (fieldType == "source_verification" && v is List<*>) {
+
+                val arr = JSONArray()
+
+                v.filterIsInstance<FormViewModel.SourceVerification>()
+                    .forEach { s ->
+                        if (s.source.isNotBlank()) {
+                            arr.put(
+                                JSONObject()
+                                    .put("source", s.source)
+                                    .put("comment", s.comment)
+                            )
+                        }
+                    }
+
+                valuesObj.put(fieldId, arr)
+                return@forEach
+            }
+
+
 
 
                 // -----------------------------
@@ -606,7 +705,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
             val entity = DraftEntity(
                 poiId = poiId,
-                formId = schema.formId,
+                formId = ""+_progressPercent.value,
                 draftJson = root.toString(),
                 updatedAt = System.currentTimeMillis()
             )
@@ -930,6 +1029,93 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                     restored[key] = list
                     return@forEach
                 }
+                if (fieldType == "event_list" && v is JSONArray) {
+
+                val list = mutableListOf<FormViewModel.Event>()
+
+                for (i in 0 until v.length()) {
+                    val obj = v.getJSONObject(i)
+
+                    val e = FormViewModel.Event(
+                        name = obj.getString("name"),
+                        eventDescription = obj.getString("description"),
+                        date = obj.getString("date")
+                    )
+
+                    val slotsArr = obj.optJSONArray("slots") ?: JSONArray()
+                    for (j in 0 until slotsArr.length()) {
+                        val s = slotsArr.getJSONObject(j)
+                        e.slots.add(
+                            FormViewModel.TimeSlot(
+                                open = s.getInt("open"),
+                                close = s.getInt("close")
+                            )
+                        )
+                    }
+
+                    list.add(e)
+                }
+
+                restored[key] = list
+                return@forEach
+            }
+                if (fieldType == "facility_list" && v is JSONArray) {
+
+                    val list = mutableListOf<FormViewModel.FacilityPoint>()
+
+                    for (i in 0 until v.length()) {
+                        val o = v.getJSONObject(i)
+                        list.add(
+                            FormViewModel.FacilityPoint(
+                                label = o.getString("label"),
+                                description = o.getString("description"),
+                                latitude = o.getString("latitude"),
+                                longitude = o.getString("longitude"),
+                                landmark = o.optString("landmark")
+                            )
+                        )
+                    }
+
+                    restored[key] = list
+                    return@forEach
+                }
+                if (fieldType == "address_list" && v is JSONArray) {
+
+                    val list = mutableListOf<FormViewModel.SecondaryAddress>()
+
+                    for (i in 0 until v.length()) {
+                        val o = v.getJSONObject(i)
+                        list.add(
+                            FormViewModel.SecondaryAddress(
+                                address = o.getString("address"),
+                                latitude = o.getString("latitude"),
+                                longitude = o.getString("longitude"),
+                                landmark = o.optString("landmark")
+                            )
+                        )
+                    }
+
+                    restored[key] = list
+                    return@forEach
+                }
+                if (fieldType == "source_verification" && v is JSONArray) {
+
+                    val list = mutableListOf<FormViewModel.SourceVerification>()
+
+                    for (i in 0 until v.length()) {
+                        val obj = v.getJSONObject(i)
+                        list.add(
+                            FormViewModel.SourceVerification(
+                                source = obj.getString("source"),
+                                comment = obj.optString("comment")
+                            )
+                        )
+                    }
+
+                    restored[key] = list
+                    return@forEach
+                }
+
 
 
                 // -----------------------------
@@ -945,7 +1131,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
 
             valuesLive.postValue(restored)
-
+            calculateProgress()
 
             withContext(Dispatchers.Main) { onLoaded() }
         }
@@ -1393,6 +1579,59 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                     }
                     return@forEach
                 }
+// ======================================================
+// FACILITY LIST (Parking / Washroom / Drinking Water)
+// ======================================================
+                if (fieldType == "facility_list" && v is List<*>) {
+
+                    val arr = JSONArray()
+
+                    v.forEach { item ->
+                        if (item is FormViewModel.FacilityPoint) {
+
+                            arr.put(
+                                JSONObject()
+                                    .put("label", item.label.trim())
+                                    .put("description", item.description.trim())
+                                    .put("latitude", item.latitude)
+                                    .put("longitude", item.longitude)
+                                    .put("landmark", item.landmark.trim())
+                            )
+                        }
+                    }
+
+                    // ✅ Only add if not empty
+                    if (arr.length() > 0) {
+                        payload[key] = arr
+                    }
+
+                    return@forEach
+                }
+
+                if (fieldType == "address_list" && v is List<*>) {
+
+                    val arr = JSONArray()
+
+                    v.forEach { item ->
+                        if (item is FormViewModel.SecondaryAddress) {
+
+                            arr.put(
+                                JSONObject()
+                                    .put("address", item.address.trim())
+                                    .put("latitude", item.latitude)
+                                    .put("longitude", item.longitude)
+                                    .put("landmark", item.landmark.trim())
+                            )
+                        }
+                    }
+
+                    // ✅ Only add if not empty
+                    if (arr.length() > 0) {
+                        payload[key] = arr
+                    }
+
+                    return@forEach
+                }
 
 
                 when {
@@ -1454,6 +1693,58 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                     else -> payload[key] = cleanJsonValue(v)
                 }
             }
+            val events =
+                current.get("events") as? List<FormViewModel.Event>
+                    ?: emptyList()
+
+            if (events.isNotEmpty()) {
+
+                val arr = JSONArray()
+
+                events.forEach { e ->
+                    val obj = JSONObject()
+                    obj.put("name", e.name)
+                    obj.put("description", e.eventDescription)
+                    obj.put("date", e.date)
+
+                    val slotsArr = JSONArray()
+                    e.slots.forEach { slot ->
+                        slotsArr.put(
+                            JSONObject()
+                                .put("open", minutesToHHMM(slot.open))
+                                .put("close", minutesToHHMM(slot.close))
+                        )
+                    }
+
+                    obj.put("slots", slotsArr)
+                    arr.put(obj)
+                }
+
+                payload["events"] = arr
+            }
+
+            val sourceVerification =
+                current["sourceVerification"] as? List<FormViewModel.SourceVerification>
+                    ?: emptyList()
+
+            if (sourceVerification.isNotEmpty()) {
+
+                val arr = JSONArray()
+
+                sourceVerification.forEach {
+                    if (it.source.isNotBlank()) {
+                        arr.put(
+                            JSONObject()
+                                .put("source", it.source)
+                                .put("comment", it.comment)
+                        )
+                    }
+                }
+
+                payload["sourceVerification"] = arr
+            }
+
+
             val operationalHours = current["operationalHours"]
             if (operationalHours is List<*> && operationalHours.isNotEmpty()) {
                 payload["operationalHours"] = buildOperationalHours()
@@ -2119,7 +2410,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
         updateValue("subPoiGalleryPhotos", emptyList<String>())
         notifyFieldChanged("subPoiGalleryPhotos")
-
+        calculateProgress()
         return emptyMap()
     }
 
@@ -2134,76 +2425,9 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         list.removeAt(index)
         updateValue("addSubPois", list)
         notifyFieldChanged("addSubPois")
+        calculateProgress()
     }
 
-    suspend fun buildSubPoiMultipartPayload():
-            Pair<RequestBody, List<MultipartBody.Part>> =
-        withContext(Dispatchers.IO) {
-
-            val values = valuesLive.value ?: emptyMap()
-            val list = values["addSubPois"] as? List<Map<String, Any?>>
-
-// ✅ No Sub POI → skip API call
-            if (list.isNullOrEmpty()) {
-                val emptyBody = "{}"
-                    .toRequestBody("application/json".toMediaTypeOrNull())
-                return@withContext Pair(emptyBody, emptyList())
-            }
-
-// ✅ Index safety check (VERY IMPORTANT)
-            if (currentSubPoiIndex !in list.indices) {
-                val emptyBody = "{}"
-                    .toRequestBody("application/json".toMediaTypeOrNull())
-                return@withContext Pair(emptyBody, emptyList())
-            }
-
-// ✅ Correct Sub-POI for this call
-            val subPoi = list[currentSubPoiIndex]
-
-
-            val payload = linkedMapOf<String, Any?>()
-
-            payload["mainPOI"] = selectedPOIData.poiName
-            payload["subPoiName"] = subPoi["subPoiName"]
-            payload["description"] = subPoi["description"]
-            payload["latitude"] = subPoi["latitude"]
-            payload["longitude"] = subPoi["longitude"]
-            payload["physicalAddress"] = subPoi["physicalAddress"]
-            payload["localGuruRemarks"] = subPoi["localGuruRemarks"]
-            payload["localityTown"] = subPoi["localityTown"]
-            payload["regionState"] = subPoi["regionState"]
-            payload["country"] = subPoi["country"]
-            payload["pinVerifiedViaGps"] = "Y"
-
-            // Static / meta
-            payload["categoryId"] = selectedPOIData.categoryId
-
-
-            payload["poiName"] = selectedPOIData.poiName
-            payload["PoiId"] = selectedPOIData.poiId.toString()
-            payload["AgentId"] = selectedPOIData.agentId
-
-            // -----------------------------
-            // Multipart for Sub POI Photos
-            // -----------------------------
-            val parts = mutableListOf<MultipartBody.Part>()
-
-            val photos =
-                subPoi["subPoiGalleryPhotos"] as? List<*> ?: emptyList<Any>()
-
-            photos.forEach { raw ->
-                val uri = Uri.parse(raw.toString())
-                val part = createMultipart("GalleryPhotos", uri)
-                parts.add(part)
-            }
-
-            val requestBody =
-                JSONObject(payload as Map<*, *>)
-                    .toString()
-                    .toRequestBody("application/json".toMediaTypeOrNull())
-
-            return@withContext Pair(requestBody, parts)
-        }
 
     fun hasAtLeastOneSubPoi(): Boolean {
         val list = valuesLive.value?.get("addSubPois") as? List<*>
@@ -2685,31 +2909,272 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
     valuesLive.postValue(current)
 
     notifyFieldChanged(fieldId)
+        calculateProgress()
 }
 
 
 
 
-    fun addTextListItem(fieldId: String, text: String) {
-        val current = valuesLive.value?.toMutableMap() ?: mutableMapOf()
-        val list = (current[fieldId] as? MutableList<String>) ?: mutableListOf()
-        list.add(text)
-        current[fieldId] = list
-        valuesLive.postValue(current)
-        notifyFieldChanged(fieldId)
-    }
+    fun calculateProgress() {
 
-    fun removeTextListItem(fieldId: String, index: Int) {
-        val current = valuesLive.value?.toMutableMap() ?: return
-        val list = (current[fieldId] as? MutableList<String>) ?: return
-        if (index in list.indices) {
-            list.removeAt(index)
-            current[fieldId] = list
-            valuesLive.postValue(current)
-            notifyFieldChanged(fieldId)
+        val schema = schemaLive.value ?: return
+        val values = valuesLive.value ?: emptyMap()
+
+        var totalFields = 0
+        var filledFields = 0
+
+        schema.tabs.forEach { tab ->
+            tab.fields.forEach { field ->
+
+                //  Skip non-input fields
+                if (field.type in listOf("label", "divider", "section_header")) {
+                    return@forEach
+                }
+
+                totalFields++
+
+                if (isFieldFilled(field, values)) {
+                    filledFields++
+                }
+            }
+        }
+
+        val percentage =
+            if (totalFields == 0) 0
+            else ((filledFields * 100f) / totalFields).toInt()
+
+        _progressPercent.postValue(percentage)
+    }
+    private fun isFieldFilled(
+        field: FieldSchema,
+        values: Map<String, Any?>
+    ): Boolean {
+
+        val value = values[field.id]
+
+        return when (field.type) {
+
+            "text", "textarea", "select" ->
+                value is String && value.trim().isNotEmpty()
+
+            "number" ->
+                value != null
+
+            "checkbox_group" ->
+                value is List<*> && value.isNotEmpty()
+
+            "photo_list" ->
+                (photoUris[field.id]?.size ?: 0) > 0
+
+            "text_list" ->
+                value is List<*> && value.any {
+                    it?.toString()?.trim()?.isNotEmpty() == true
+                }
+
+            "sub_poi_list" ->
+                value is List<*> && value.isNotEmpty()
+
+            "operational_hours" ->
+                value is List<*> && value.isNotEmpty()
+
+            else -> false
         }
     }
 
+    fun fetchAccurateLocation() {
+
+
+
+        val request = CurrentLocationRequest.Builder()
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .setMaxUpdateAgeMillis(0)
+            .build()
+
+        try {
+
+            fusedClient.getCurrentLocation(request, object : CancellationToken() {
+                override fun onCanceledRequested(p0: OnTokenCanceledListener): CancellationToken = this
+                override fun isCancellationRequested() = false
+            }).addOnSuccessListener { loc ->
+
+                if (loc != null) {
+
+                    // format to required 6 decimal precision
+                    val latStr = String.format(Locale.US, "%.6f", loc.latitude)
+                    val lngStr = String.format(Locale.US, "%.6f", loc.longitude)
+                     Log.d("LAT Rohit :",latStr)
+                    // update values (as String)
+                    updateValue("backgroundLatitude", latStr)
+                    updateValue("backgroundLongitude", lngStr)
+
+
+
+
+                } else {
+
+                }
+
+            }.addOnFailureListener {
+
+            }
+
+        } catch (e: SecurityException) {
+
+        }
+    }
+
+//Add Events
+
+    data class Event(
+        val name: String,
+        val date: String,                // yyyy-MM-dd
+        val eventDescription: String,                // yyyy-MM-dd
+        val slots: MutableList<TimeSlot> = mutableListOf()
+    )
+    fun addEvent(e: Event) {
+        val current =
+            (valuesLive.value?.get("events") as? MutableList<Event>)
+                ?: mutableListOf()
+
+        current.add(e)
+        updateValue("events", current)
+        notifyFieldChanged("events")
+    }
+
+//    fun removeEvent(e: Event) {
+//        val current =
+//            (valuesLive.value?.get("events") as? MutableList<Event>)
+//                ?: return
+//
+//        current.remove(e)
+//        updateValue("events", current)
+//        notifyFieldChanged("events")
+//    }
+
+    fun removeEvent(event: Event) {
+
+        val currentMap = valuesLive.value?.toMutableMap() ?: return
+
+        val oldList = currentMap["events"] as? List<Event> ?: return
+
+        //  ALWAYS create new list
+        val newList = oldList
+            .filterNot {
+                it.name == event.name &&
+                        it.date == event.date
+            }
+            .toMutableList()
+
+        currentMap["events"] = newList
+
+        //  update VM state
+        valuesLive.postValue(currentMap)
+
+        //  REQUIRED in your architecture
+        notifyFieldChanged("events")
+    }
+
+//Event end
+
+//Add Facilities like parking, washroom, drinking water etc
+
+
+    data class FacilityPoint(
+        val label: String,
+        val description: String,
+        val latitude: String,
+        val longitude: String,
+        val landmark: String
+    )
+
+
+
+
+    fun addFacility(fieldId: String, facility: FacilityPoint) {
+
+        val current =
+            valuesLive.value?.get(fieldId) as? MutableList<FacilityPoint>
+                ?: mutableListOf()
+
+        current.add(facility)
+
+        updateValue(fieldId, current)
+        notifyFieldChanged(fieldId)
+    }
+
+
+    fun removeFacility(fieldId: String, item: FacilityPoint) {
+
+        val current = valuesLive.value?.toMutableMap() ?: return
+
+        val oldList = current[fieldId] as? List<FacilityPoint> ?: return
+
+        //  Create NEW mutable list
+        val newList = oldList.toMutableList()
+
+        //  Remove by stable identity (NOT object reference)
+        newList.removeAll { fp ->
+            fp.label == item.label &&
+                    fp.latitude == item.latitude &&
+                    fp.longitude == item.longitude
+        }
+
+        current[fieldId] = newList
+
+        //  Publish NEW map instance
+        valuesLive.postValue(current)
+        notifyFieldChanged(fieldId)
+    }
+//Secondary Address
+
+    data class SecondaryAddress(
+        val address: String,
+        val latitude: String,
+        val longitude: String,
+        val landmark: String
+    )
+
+    fun addAddress(fieldId: String, facility: SecondaryAddress) {
+
+        val current =
+            valuesLive.value?.get(fieldId) as? MutableList<SecondaryAddress>
+                ?: mutableListOf()
+
+        current.add(facility)
+
+        updateValue(fieldId, current)
+        notifyFieldChanged(fieldId)
+    }
+
+
+    fun removeAddress(fieldId: String, item: SecondaryAddress) {
+
+        val current = valuesLive.value?.toMutableMap() ?: return
+
+        val oldList = current[fieldId] as? List<SecondaryAddress> ?: return
+
+        //  Create NEW mutable list
+        val newList = oldList.toMutableList()
+
+        //  Remove by stable identity (NOT object reference)
+        newList.removeAll { fp ->
+            fp.address == item.address &&
+                    fp.latitude == item.latitude &&
+                    fp.longitude == item.longitude
+        }
+
+        current[fieldId] = newList
+
+        //  Publish NEW map instance
+        valuesLive.postValue(current)
+        notifyFieldChanged(fieldId)
+    }
+//Source Verification
+
+    data class SourceVerification(
+        val source: String,
+        var comment: String = ""
+    )
 
 
 }

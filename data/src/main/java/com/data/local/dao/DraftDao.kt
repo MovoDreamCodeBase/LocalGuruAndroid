@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.data.local.entity.DraftEntity
+import com.data.local.model.PoiProgress
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,4 +25,11 @@ interface DraftDao {
 
     @Query("SELECT COUNT(*) FROM draft_table WHERE poiId = :poiId")
     suspend fun hasDraft(poiId: String): Int
+
+    @Query("""
+    SELECT poiId, formId 
+    FROM draft_table 
+    WHERE poiId IN (:poiIds)
+""")
+    suspend fun getProgressForPois(poiIds: List<String>): List<PoiProgress>
 }

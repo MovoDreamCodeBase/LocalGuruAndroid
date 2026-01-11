@@ -187,6 +187,18 @@ class AddPoiSubPoiFormActivity : BaseActivity() {
 
             },onRequestRebind = { fieldId ->
                 vm.notifyFieldChanged(fieldId) // ✅ ONLY PLACE this exists
+            }, onAddEvent = {
+
+            }, onRemoveEvent = {event ->
+
+            }, onAddFacility = {fieldId, title->
+
+            }, onRemoveFacility = {fieldId, item ->
+
+            }, onAddAddress = {fieldId, title->
+
+            }, onRemoveAddress = {fieldId, item ->
+
             }
 
 
@@ -384,14 +396,7 @@ class AddPoiSubPoiFormActivity : BaseActivity() {
                 }
             })
 
-        vm.locationFetchState.observe(this, Observer{
-            if(it){
 
-
-            }else{
-                Toast.makeText(this@AddPoiSubPoiFormActivity,"Please try again...", Toast.LENGTH_LONG).show()
-            }
-        })
 
 
     }

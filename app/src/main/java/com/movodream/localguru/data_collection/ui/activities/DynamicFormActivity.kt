@@ -15,12 +15,14 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
@@ -40,6 +42,7 @@ import com.core.utils.DebugLog
 import com.core.utils.PermissionUtils
 import com.core.utils.Utils
 import com.google.android.flexbox.FlexboxLayout
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -108,6 +111,12 @@ class DynamicFormActivity : BaseActivity() {
     //Temp change
     private var currentSubPoiIndex = 0
     private var totalSubPoiCount = 0
+    // Holds pending facility location before save
+    private var facilityLat: String? = null
+    private var addressLat: String? = null
+    private var facilityLng: String? = null
+    private var addressLng: String? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -247,13 +256,26 @@ class DynamicFormActivity : BaseActivity() {
                 vm.removeSeasonal(index)
             },onRequestRebind = { fieldId ->
                 vm.notifyFieldChanged(fieldId) // ✅ ONLY PLACE this exists
+            }, onAddEvent = {
+                showAddEventDialog()
+            }, onRemoveEvent = {event ->
+                vm.removeEvent(event)
+            }, onAddFacility = {fieldId, title->
+                showAddFacilityDialog(fieldId,title)
+            }, onRemoveFacility = {fieldId, item ->
+               vm.removeFacility(fieldId,item)
+            }, onAddAddress = {fieldId, title->
+                showAddAddressDialog(fieldId,title)
+            }, onRemoveAddress = {fieldId, item ->
+                vm.removeAddress(fieldId,item)
             }
 
 
 
 
 
-        )
+
+            )
         adapter.setHasStableIds(true)
         recycler.adapter = adapter
 
@@ -265,7 +287,7 @@ class DynamicFormActivity : BaseActivity() {
         vm.schemaLive.observe(this) { schema ->
             schema?.let {
                 titleTv.text = selectedPOI!!.poiName
-                progressTv.text = "${selectedPOI!!.progress ?: 0}%"
+              //  progressTv.text = "${selectedPOI!!.progress ?: 0}%"
                 categoryTV.text = it.tags[0]
                 tabAdapter.submitTabs(it.tabs)
             }
@@ -368,6 +390,11 @@ class DynamicFormActivity : BaseActivity() {
             val firstTab = loadedSchema.tabs.first()
             showTab(firstTab.id)   // spinner restores correctly
         }
+        vm.progressPercent.observe(this) { percent ->
+            progressTv.text = "${percent ?: 0}%"
+
+        }
+
 
         setObserver()
     }
@@ -604,14 +631,7 @@ class DynamicFormActivity : BaseActivity() {
                 }
             })
 
-        vm.locationFetchState.observe(this, Observer{
-            if(it){
 
-
-            }else{
-                Toast.makeText(this@DynamicFormActivity,"Please try again...", Toast.LENGTH_LONG).show()
-            }
-        })
 
 
     }
@@ -741,6 +761,9 @@ class DynamicFormActivity : BaseActivity() {
     }
 
     private fun fetchLocation(){
+        if(!pendingLatField.startsWith("subPoi")){
+            vm.fetchAccurateLocation()
+        }
         mapLauncher.launch(Intent(this, MapPickerActivity::class.java))
     }
 
@@ -1647,7 +1670,7 @@ class DynamicFormActivity : BaseActivity() {
     }
 
     private fun submitCurrentSubPoi() {
-        // 👉 Tell ViewModel which Sub-POI to submit
+        //  Tell ViewModel which Sub-POI to submit
         vm.currentSubPoiIndex = currentSubPoiIndex
 
         vm.submitBulkSubPOIAfterMainPOI()
@@ -1748,12 +1771,315 @@ class DynamicFormActivity : BaseActivity() {
 
             vm.updateValue(fieldId, uriStrings)
             vm.notifyFieldChanged(fieldId)
+            vm.calculateProgress()
+        }
+
+
+    private fun showAddEventDialog() {
+        val dialog = BottomSheetDialog(
+            this,
+            com.google.android.material.R.style.Theme_Design_BottomSheetDialog
+        )
+
+        dialog.setContentView(R.layout.dialog_add_event)
+
+        dialog.window?.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
+        dialog.show()
+
+        val bottomSheet =
+            dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+
+        bottomSheet?.let {
+            val behavior = BottomSheetBehavior.from(it)
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+            behavior.isHideable = false
         }
 
 
 
+        val etName = dialog.findViewById<EditText>(R.id.etEventName)!!
+        val etDesc = dialog.findViewById<EditText>(R.id.etEventDescription)!!
+        val tvDate = dialog.findViewById<TextView>(R.id.tvEventDate)!!
+        val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
+        val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        var date = ""
+        val slots = mutableListOf<FormViewModel.TimeSlot>()
+
+        tvDate.setOnClickListener {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, y, m, d ->
+                    date = "%04d-%02d-%02d".format(y, m + 1, d)
+                    tvDate.text = date
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+
+        btnAddSlot.setOnClickListener {
+            addSlotRow(this, slotContainer, slots)
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+
+            val name = etName.text.toString().trim()
+            val desc = etDesc.text.toString().trim()
+
+            if (name.isBlank()) {
+                Toast.makeText(this,"Please enter event name", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (desc.isBlank()) {
+                Toast.makeText(this,"Please enter event description", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (date.isBlank()) {
+                Toast.makeText(this,"Please select event date", Toast.LENGTH_SHORT).show()
+
+                return@setOnClickListener
+            }
+
+            val slotError = validateSlots(slots)
+            if (slotError != null) {
+                Toast.makeText(this,slotError, Toast.LENGTH_SHORT).show()
+               return@setOnClickListener
+            }
+
+            vm.addEvent(
+                FormViewModel.Event(
+                    name = name,
+                    eventDescription = desc,   // ✅ NEW
+                    date = date,
+                    slots = slots
+                )
+            )
+
+            dialog.dismiss()
+        }
 
 
+
+    }
+    private var activePickLocationView: TextView? = null
+    private fun showAddFacilityDialog(fieldId: String,title : String) {
+
+        val dialog = BottomSheetDialog(
+            this,
+            com.google.android.material.R.style.Theme_Design_BottomSheetDialog
+        )
+
+        dialog.setContentView(R.layout.dialog_add_facility)
+
+        dialog.window?.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
+        dialog.show()
+
+        dialog.findViewById<View>(
+            com.google.android.material.R.id.design_bottom_sheet
+        )?.let {
+            BottomSheetBehavior.from(it).apply {
+                state = BottomSheetBehavior.STATE_EXPANDED
+                skipCollapsed = true
+                isHideable = false
+            }
+        }
+
+        val tvTitle = dialog.findViewById<TextView>(R.id.tvTitle)!!
+        val etLabel = dialog.findViewById<EditText>(R.id.etLabel)!!
+        val etDesc = dialog.findViewById<EditText>(R.id.etDesc)!!
+        val tvPickLocation = dialog.findViewById<TextView>(R.id.tvPickLocation)!!
+        val etLandmark = dialog.findViewById<EditText>(R.id.etLandmark)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        tvTitle.text = title
+
+        // reset global values
+        facilityLat = null
+        facilityLng = null
+        activePickLocationView = tvPickLocation
+
+        tvPickLocation.setOnClickListener {
+            facilityMapLauncher.launch(
+                Intent(this, MapPickerActivity::class.java)
+            )
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+
+            val label = etLabel.text.toString().trim()
+            val desc = etDesc.text.toString().trim()
+            val landmark = etLandmark.text.toString().trim()
+
+            when {
+
+                label.isBlank() ->  Toast.makeText(this@DynamicFormActivity,"Please enter label", Toast.LENGTH_SHORT).show()
+
+                desc.isBlank() ->   Toast.makeText(this@DynamicFormActivity,"Please enter description", Toast.LENGTH_SHORT).show()
+
+                facilityLat.isNullOrBlank() || facilityLng.isNullOrBlank() ->
+                    Toast.makeText(this@DynamicFormActivity,"Please pick location", Toast.LENGTH_SHORT).show()
+
+                else -> {
+
+                    val facility = FormViewModel.FacilityPoint(
+                        label = label,
+                        description = desc,
+                        latitude = facilityLat!!,
+                        longitude = facilityLng!!,
+                        landmark = landmark
+                    )
+
+                    vm.addFacility(fieldId, facility)
+                    dialog.dismiss()
+                }
+            }
+        }
+    }
+
+
+
+
+    private val facilityMapLauncher =
+    registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+        if (result.resultCode == RESULT_OK && result.data != null) {
+
+
+            facilityLat = String.format(
+                Locale.US,
+                "%.6f",
+                result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
+            )
+
+            facilityLng = String.format(
+                Locale.US,
+                "%.6f",
+                result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
+            )
+            // Update UI text if dialog is open
+            activePickLocationView?.text =
+                "Location picked (${facilityLat}, ${facilityLng})"
+        }
+    }
+
+// Secondary Address
+
+    private var activePickLocationViewAdd: TextView? = null
+    private fun showAddAddressDialog(fieldId: String,title : String) {
+
+        val dialog = BottomSheetDialog(
+            this,
+            com.google.android.material.R.style.Theme_Design_BottomSheetDialog
+        )
+
+        dialog.setContentView(R.layout.dialog_add_secondary_address)
+
+        dialog.window?.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
+        dialog.show()
+
+        dialog.findViewById<View>(
+            com.google.android.material.R.id.design_bottom_sheet
+        )?.let {
+            BottomSheetBehavior.from(it).apply {
+                state = BottomSheetBehavior.STATE_EXPANDED
+                skipCollapsed = true
+                isHideable = false
+            }
+        }
+
+        val tvTitle = dialog.findViewById<TextView>(R.id.tvTitle)!!
+        val etAddress = dialog.findViewById<EditText>(R.id.etAddress)!!
+        val tvPickLocationAdd = dialog.findViewById<TextView>(R.id.tvPickLocationAdd)!!
+        val etLandmarkAdd = dialog.findViewById<EditText>(R.id.etLandmarkAdd)!!
+        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+
+        tvTitle.text = title
+
+        // reset global values
+        addressLat = null
+        addressLng = null
+        activePickLocationViewAdd = tvPickLocationAdd
+
+        tvPickLocationAdd.setOnClickListener {
+            secondaryAddressMapLauncher.launch(
+                Intent(this, MapPickerActivity::class.java)
+            )
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSave.setOnClickListener {
+
+            val address = etAddress.text.toString().trim()
+            val landmark = etLandmarkAdd.text.toString().trim()
+
+            when {
+
+                address.isBlank() ->  Toast.makeText(this@DynamicFormActivity,"Please enter address", Toast.LENGTH_SHORT).show()
+
+                addressLat.isNullOrBlank() || addressLng.isNullOrBlank() ->
+                    Toast.makeText(this@DynamicFormActivity,"Please pick location", Toast.LENGTH_SHORT).show()
+
+                else -> {
+
+                    val facility = FormViewModel.SecondaryAddress(
+                        address = address,
+                        latitude = addressLat!!,
+                        longitude = addressLng!!,
+                        landmark = landmark
+                    )
+
+                    vm.addAddress(fieldId, facility)
+                    dialog.dismiss()
+                }
+            }
+        }
+    }
+    private val secondaryAddressMapLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+            if (result.resultCode == RESULT_OK && result.data != null) {
+
+
+                addressLat = String.format(
+                    Locale.US,
+                    "%.6f",
+                    result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
+                )
+
+                addressLng = String.format(
+                    Locale.US,
+                    "%.6f",
+                    result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
+                )
+                // Update UI text if dialog is open
+                activePickLocationViewAdd?.text =
+                    "Location picked (${addressLat}, ${addressLng})"
+            }
+        }
 
 
 }

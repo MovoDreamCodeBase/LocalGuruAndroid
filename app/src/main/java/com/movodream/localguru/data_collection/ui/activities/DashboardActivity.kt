@@ -15,10 +15,12 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.core.R
 import com.core.base.BaseActivity
 import com.core.constants.AppConstants
 import com.core.customviews.CustomDialogBuilder
+import com.core.customviews.MasterDownloadProgressDialog
 import com.core.preferences.MyPreference
 import com.core.preferences.PrefKey
 import com.core.utils.DebugLog
@@ -34,12 +36,15 @@ import com.movodream.localguru.databinding.ActivityDashboardBinding
 import com.movodream.localguru.login.ui.LoginActivity
 import com.network.client.ResponseHandler
 import com.network.model.ResponseData
-import com.network.model.ResponseListData
+import kotlinx.coroutines.launch
 import java.io.File
 
 
 class DashboardActivity : BaseActivity() {
+
+    private lateinit var masterProgressDialog: MasterDownloadProgressDialog
     private  var isFromShare: Boolean = false
+    private  var isFromDashboard: Boolean = false
     private lateinit var binding: ActivityDashboardBinding
     private lateinit var dashboardViewModel: DashboardViewModel
 
@@ -64,7 +69,9 @@ class DashboardActivity : BaseActivity() {
         dashboardViewModel = ViewModelProvider(this).get(DashboardViewModel::class.java)
         binding.lifecycleOwner = this
         permissionUtils = PermissionUtils(this)
-       // setAdapters()
+        masterProgressDialog = MasterDownloadProgressDialog(this)
+
+        // setAdapters()
         setCustomListener()
         setObserver()
          agentId = intent.getStringExtra("KEY_AGENT_ID")
@@ -72,7 +79,19 @@ class DashboardActivity : BaseActivity() {
        callDashboardAPI()
     }
 
+    override fun onResume() {
+        super.onResume()
 
+        if(dashboardViewModel.dashboardTasks.value!=null &&dashboardViewModel.dashboardTasks.value!!.isNotEmpty()) {
+            val poiIds = dashboardViewModel.dashboardTasks.value?.map { it.poiId.toString() }
+            dashboardViewModel.refreshDraftProgress(poiIds!!)
+        }
+
+        if(dashboardViewModel.filteredTasks.value!=null &&dashboardViewModel.filteredTasks.value!!.isNotEmpty()) {
+            val poiIds = dashboardViewModel.filteredTasks.value?.map { it.poiId.toString() }
+            dashboardViewModel.refreshTaskDraftProgress(poiIds!!)
+        }
+    }
     private fun setAdapters(){
         val adapter = DashboardPagerAdapter(this)
         binding.viewPager.adapter = adapter
@@ -125,7 +144,7 @@ class DashboardActivity : BaseActivity() {
         binding.bottomNav.selectItem(0)
 
         binding.cvProfile.setOnClickListener {
-         showLogoutTooltip(binding.cvProfile)
+         showMenuTooltip(binding.cvProfile)
         }
 
     }
@@ -187,7 +206,11 @@ class DashboardActivity : BaseActivity() {
                              binding.llDashboard.visibility = View.VISIBLE
                              setAdapters()
                              binding.dashboard = state.response!!.data
-                          dashboardViewModel.mapDashboardData(state.response!!.data!!,)
+                             binding.dashboard = state.response!!.data
+
+                             lifecycleScope.launch {
+                                 dashboardViewModel.mapDashboardData(state.response!!.data!!)
+                             }
 
                              checkLocationPermissionAndStart()
 
@@ -349,6 +372,59 @@ class DashboardActivity : BaseActivity() {
             shareTextAsFile(this@DashboardActivity,text)
 
         }
+
+        dashboardViewModel.masterState.observe(this) { state ->
+            when (state) {
+
+                is DashboardViewModel.MasterDownloadState.Loading -> {
+                    masterProgressDialog.show()
+                }
+
+                is DashboardViewModel.MasterDownloadState.Progress -> {
+                    masterProgressDialog.update(state.percent)
+                }
+
+                is DashboardViewModel.MasterDownloadState.Success -> {
+                    masterProgressDialog.hide()
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        "Master data downloaded successfully",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    dashboardViewModel.resetMasterState()
+                    if(isFromDashboard){
+                        //  After download → fetch from DB
+                        val categoryId = selectedPOI.categoryId.toString()
+
+                        dashboardViewModel.openCategoryFormIfAvailable(
+                            categoryId = categoryId,
+                            onReady = { schema ->
+                                openDynamicForm(schema, selectedPOI)
+                            },
+                            onNeedDownload = {
+                                // refresh master
+                            }
+                        )
+
+                    }
+
+                }
+
+                is DashboardViewModel.MasterDownloadState.Error -> {
+                    masterProgressDialog.hide()
+                    Toast.makeText(
+                        this@DashboardActivity,
+                        state.message,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    dashboardViewModel.resetMasterState()
+                }
+
+                else -> { /* Idle - ignore */ }
+            }
+        }
+
+
 
     }
 
@@ -555,7 +631,7 @@ class DashboardActivity : BaseActivity() {
 
 
 
-    private fun showLogoutTooltip(anchorView: View) {
+    private fun showMenuTooltip(anchorView: View) {
         val popupView = layoutInflater.inflate(com.movodream.localguru.R.layout.popup_logout, null)
 
         val popupWindow = PopupWindow(
@@ -584,6 +660,17 @@ class DashboardActivity : BaseActivity() {
             popupWindow.dismiss()
             performLogout()
         }
+
+        popupView.findViewById<TextView>(com.movodream.localguru.R.id.tvMasterRefresh).setOnClickListener {
+            popupWindow.dismiss()
+            if(Utils.isNetworkAvailable(this)) {
+                this.isFromDashboard = false;
+                dashboardViewModel.refreshCategoryMaster()
+            }else{
+                Toast.makeText(this@DashboardActivity,"You're offline. Please connect to the internet to continue.", Toast.LENGTH_SHORT).show()
+
+            }
+        }
     }
 
     private fun dpToPx(dp: Int): Int {
@@ -600,5 +687,45 @@ class DashboardActivity : BaseActivity() {
 
     }
 
+    fun onPOISelected(isFromDashboard: Boolean, option: TaskItem){
+        selectedPOI = option
+        this.isFromDashboard = isFromDashboard
+
+
+        val categoryId = selectedPOI.categoryId.toString()
+
+        dashboardViewModel.openCategoryFormIfAvailable(
+            categoryId = categoryId,
+
+            onReady = { schema ->
+                openDynamicForm(schema, selectedPOI)
+            },
+
+            onNeedDownload = {
+                // Trigger master download
+                dashboardViewModel.refreshCategoryMaster()
+            }
+        )
+    }
+    private fun openDynamicForm(
+        categoryDataSchema: FormSchema,
+        selectedPOI: TaskItem
+    ) {
+        val intent = Intent(
+            this@DashboardActivity,
+            DynamicFormActivity::class.java
+        )
+        intent.putExtra("KEY_SCHEMA", categoryDataSchema)
+        intent.putExtra("KEY_POI", selectedPOI)
+        launcherDynamicForm.launch(intent)
+    }
+    private val launcherDynamicForm = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            binding.bottomNav.selectItem(0)
+            callDashboardAPI()
+        }
+    }
 
 }

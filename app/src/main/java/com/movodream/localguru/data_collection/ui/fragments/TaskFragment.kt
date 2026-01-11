@@ -145,8 +145,10 @@ class TaskFragment : Fragment(), TaskAdapter.TasksClickListener {
         if(option.taskStatus == AppConstants.TAB_COMPLETED){
             (activity as? DashboardActivity)?.callPOIDetailsAPI(selectedPOI!!,false)
         }else {
-            viewModel.setCaller("TASK")
-            viewModel.loadCategory(option.categoryId)
+//            viewModel.setCaller("TASK")
+//            viewModel.loadCategory(option.categoryId)
+
+            (activity as? DashboardActivity)?.onPOISelected(true,option)
         }
     }
 

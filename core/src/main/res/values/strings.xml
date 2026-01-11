@@ -3,5 +3,7 @@
     <string name="permission_location_alert">This app needs access to your location to accurately detect your current position and provide precise navigation, nearby activity updates, and location-based features. </string>
     <string name="permissions_needed">Permissions needed</string>
     <string name="permission_continue">Continue</string>
+    <string name="downloading_master_data">Downloading Master Data</string>
+    <string name="please_wait">Please wait...</string>
 
 </resources>
