@@ -1505,11 +1505,13 @@ class DynamicFormAdapter(
                     val ctx = itemView.context
                     val vertical = LinearLayout(ctx).apply {
                         orientation = LinearLayout.VERTICAL
+                        setPadding(16.dpToPx(ctx), 8.dpToPx(ctx), 16.dpToPx(ctx), 8.dpToPx(ctx))
                     }
 
+
                     val btnAdd = TextView(ctx).apply {
-                        text = field.addButtonLabel ?: "Add Event"
-                        textSize = 14f
+                        text = field.addButtonLabel ?: "+ Add Event"
+                        textSize = 13f
                         gravity = Gravity.CENTER
                         setPadding(24, 12, 24, 12)
                         background = ContextCompat.getDrawable(ctx, com.core.R.drawable.bg_button_background)
@@ -1539,7 +1541,7 @@ class DynamicFormAdapter(
                         }
 
                         val tv = TextView(ctx).apply {
-                            text = "${e.name} • ${e.date}"
+                            text = "${e.name}"
                             layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
                         }
 

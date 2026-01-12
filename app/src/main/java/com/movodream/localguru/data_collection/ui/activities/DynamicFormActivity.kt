@@ -1,6 +1,7 @@
 package com.movodream.localguru.data_collection.ui.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.Dialog
@@ -20,6 +21,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -1775,50 +1777,219 @@ class DynamicFormActivity : BaseActivity() {
         }
 
 
+//    private fun showAddEventDialog() {
+//        val dialog = BottomSheetDialog(
+//            this,
+//            com.google.android.material.R.style.Theme_Design_BottomSheetDialog
+//        )
+//
+//        dialog.setContentView(R.layout.dialog_add_event)
+//
+//        dialog.window?.setSoftInputMode(
+//            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+//        )
+//
+//        dialog.show()
+//
+//        val bottomSheet =
+//            dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+//
+//        bottomSheet?.let {
+//            val behavior = BottomSheetBehavior.from(it)
+//            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+//            behavior.skipCollapsed = true
+//            behavior.isHideable = false
+//        }
+//
+//
+//
+//        val etName = dialog.findViewById<EditText>(R.id.etEventName)!!
+//        val etDesc = dialog.findViewById<EditText>(R.id.etEventDescription)!!
+//        val tvDate = dialog.findViewById<TextView>(R.id.tvEventDate)!!
+//        val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
+//        val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
+//        val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
+//        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
+//
+//        var date = ""
+//        val slots = mutableListOf<FormViewModel.TimeSlot>()
+//
+//        tvDate.setOnClickListener {
+//            val cal = Calendar.getInstance()
+//            DatePickerDialog(
+//                this,
+//                { _, y, m, d ->
+//                    date = "%04d-%02d-%02d".format(y, m + 1, d)
+//                    tvDate.text = date
+//                },
+//                cal.get(Calendar.YEAR),
+//                cal.get(Calendar.MONTH),
+//                cal.get(Calendar.DAY_OF_MONTH)
+//            ).show()
+//        }
+//
+//        btnAddSlot.setOnClickListener {
+//            addSlotRow(this, slotContainer, slots)
+//        }
+//
+//        btnCancel.setOnClickListener { dialog.dismiss() }
+//
+//        btnSave.setOnClickListener {
+//
+//            val name = etName.text.toString().trim()
+//            val desc = etDesc.text.toString().trim()
+//
+//            if (name.isBlank()) {
+//                Toast.makeText(this,"Please enter event name", Toast.LENGTH_SHORT).show()
+//                return@setOnClickListener
+//            }
+//
+//            if (desc.isBlank()) {
+//                Toast.makeText(this,"Please enter event description", Toast.LENGTH_SHORT).show()
+//                return@setOnClickListener
+//            }
+//
+//            if (date.isBlank()) {
+//                Toast.makeText(this,"Please select event date", Toast.LENGTH_SHORT).show()
+//
+//                return@setOnClickListener
+//            }
+//
+//            val slotError = validateSlots(slots)
+//            if (slotError != null) {
+//                Toast.makeText(this,slotError, Toast.LENGTH_SHORT).show()
+//               return@setOnClickListener
+//            }
+//
+//            vm.addEvent(
+//                FormViewModel.Event(
+//                    name = name,
+//                    eventDescription = desc,   // ✅ NEW
+//                    date = date,
+//                    slots = slots
+//                )
+//            )
+//
+//            dialog.dismiss()
+//        }
+//
+//
+//
+//    }
+
     private fun showAddEventDialog() {
+
         val dialog = BottomSheetDialog(
             this,
             com.google.android.material.R.style.Theme_Design_BottomSheetDialog
         )
 
         dialog.setContentView(R.layout.dialog_add_event)
-
-        dialog.window?.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
-
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         dialog.show()
 
-        val bottomSheet =
-            dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-
-        bottomSheet?.let {
-            val behavior = BottomSheetBehavior.from(it)
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
-            behavior.skipCollapsed = true
-            behavior.isHideable = false
+        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let {
+            BottomSheetBehavior.from(it).apply {
+                state = BottomSheetBehavior.STATE_EXPANDED
+                skipCollapsed = true
+                isHideable = false
+            }
         }
-
-
 
         val etName = dialog.findViewById<EditText>(R.id.etEventName)!!
         val etDesc = dialog.findViewById<EditText>(R.id.etEventDescription)!!
+
+        val rg = dialog.findViewById<RadioGroup>(R.id.rgRecurrence)!!
+        val rbDaily = dialog.findViewById<RadioButton>(R.id.rbDaily)!!
+        val rbWeekly = dialog.findViewById<RadioButton>(R.id.rbWeekly)!!
+        val rbDate = dialog.findViewById<RadioButton>(R.id.rbDate)!!
+
         val tvDate = dialog.findViewById<TextView>(R.id.tvEventDate)!!
+        val weekContainer = dialog.findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.weekDayContainer)!!
+
         val slotContainer = dialog.findViewById<LinearLayout>(R.id.slotContainer)!!
         val btnAddSlot = dialog.findViewById<TextView>(R.id.btnAddSlot)!!
         val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
         val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
 
-        var date = ""
         val slots = mutableListOf<FormViewModel.TimeSlot>()
+        var selectedDate: String? = null
+        val selectedDays = mutableSetOf<FormViewModel.WeekDay>()
 
+        // ---------------------------
+        // Weekday chips
+        // ---------------------------
+        fun renderWeekDays() {
+            weekContainer.removeAllViews()
+
+            FormViewModel.WeekDay.values().forEach { day ->
+                val chip = TextView(this).apply {
+                    text = day.name.first().toString()
+                    setPadding(24, 12, 24, 12)
+                    typeface = ResourcesCompat.getFont(context, com.core.R.font.dm_sans_bold)
+                    setTextColor(Color.BLACK)
+                    background = ContextCompat.getDrawable(
+                        context,
+                        if (selectedDays.contains(day))
+                            R.drawable.bg_chip_selected
+                        else R.drawable.bg_chip
+                    )
+                    setOnClickListener {
+                        if (selectedDays.contains(day)) {
+                            selectedDays.remove(day)
+                            background = ContextCompat.getDrawable(context, R.drawable.bg_chip)
+                        } else {
+                            selectedDays.add(day)
+                            background = ContextCompat.getDrawable(context, R.drawable.bg_chip_selected)
+                        }
+                    }
+                }
+                val params = ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    marginEnd = 24   // horizontal spacing
+                    bottomMargin = 2 // vertical spacing (if wrapping to next line)
+                }
+
+                chip.layoutParams = params
+                weekContainer.addView(chip)
+            }
+        }
+
+        // ---------------------------
+        // Recurrence toggle
+        // ---------------------------
+        rg.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbDaily -> {
+                    tvDate.visibility = View.GONE
+                    weekContainer.visibility = View.GONE
+                }
+                R.id.rbWeekly -> {
+                    tvDate.visibility = View.GONE
+                    weekContainer.visibility = View.VISIBLE
+                    renderWeekDays()
+                }
+                R.id.rbDate -> {
+                    weekContainer.visibility = View.GONE
+                    tvDate.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        rbDaily.isChecked = true
+
+        // ---------------------------
+        // Date picker
+        // ---------------------------
         tvDate.setOnClickListener {
             val cal = Calendar.getInstance()
             DatePickerDialog(
                 this,
                 { _, y, m, d ->
-                    date = "%04d-%02d-%02d".format(y, m + 1, d)
-                    tvDate.text = date
+                    selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
+                    tvDate.text = selectedDate
                 },
                 cal.get(Calendar.YEAR),
                 cal.get(Calendar.MONTH),
@@ -1832,50 +2003,84 @@ class DynamicFormActivity : BaseActivity() {
 
         btnCancel.setOnClickListener { dialog.dismiss() }
 
+        // ---------------------------
+        // SAVE
+        // ---------------------------
         btnSave.setOnClickListener {
 
             val name = etName.text.toString().trim()
             val desc = etDesc.text.toString().trim()
 
             if (name.isBlank()) {
-                Toast.makeText(this,"Please enter event name", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                toast("Please enter event name"); return@setOnClickListener
             }
-
             if (desc.isBlank()) {
-                Toast.makeText(this,"Please enter event description", Toast.LENGTH_SHORT).show()
+                toast("Please enter event description"); return@setOnClickListener
+            }
+
+            val recurrence = when {
+                rbDaily.isChecked -> FormViewModel.RecurrenceType.DAILY
+                rbWeekly.isChecked -> FormViewModel.RecurrenceType.WEEKLY
+                else -> FormViewModel.RecurrenceType.DATE
+            }
+
+            if (recurrence == FormViewModel.RecurrenceType.WEEKLY && selectedDays.isEmpty()) {
+                toast("Please select at least one weekday")
                 return@setOnClickListener
             }
 
-            if (date.isBlank()) {
-                Toast.makeText(this,"Please select event date", Toast.LENGTH_SHORT).show()
-
+            if (recurrence == FormViewModel.RecurrenceType.DATE && selectedDate.isNullOrBlank()) {
+                toast("Please select event date")
                 return@setOnClickListener
             }
 
-            val slotError = validateSlots(slots)
+            val slotError = validateEventSlots(slots)
             if (slotError != null) {
-                Toast.makeText(this,slotError, Toast.LENGTH_SHORT).show()
-               return@setOnClickListener
+                toast(slotError); return@setOnClickListener
             }
 
             vm.addEvent(
                 FormViewModel.Event(
                     name = name,
-                    eventDescription = desc,   // ✅ NEW
-                    date = date,
+                    eventDescription = desc,
+                    recurrenceType = recurrence,
+                    date = selectedDate,
+                    weekDays = selectedDays.toList(),
                     slots = slots
                 )
             )
 
             dialog.dismiss()
         }
-
-
-
     }
+
+    private fun toast(msg : String){
+        Toast.makeText(this@DynamicFormActivity,msg, Toast.LENGTH_SHORT).show()
+    }
+    fun validateEventSlots(slots: List<FormViewModel.TimeSlot>): String? {
+
+        if (slots.isEmpty()) {
+            return "Please add at least one time slot"
+        }
+
+        slots.forEachIndexed { index, s ->
+            if (s.open < 0) {
+                return "Start time is required in slot ${index + 1}"
+            }
+
+            // close is optional
+            if (s.close >= 0 && s.open >= s.close) {
+                return "End time must be after start time in slot ${index + 1}"
+            }
+        }
+
+        return null
+    }
+
+
     private var activePickLocationView: TextView? = null
-    private fun showAddFacilityDialog(fieldId: String,title : String) {
+    @SuppressLint("SetTextI18n")
+    private fun showAddFacilityDialog(fieldId: String, title : String) {
 
         val dialog = BottomSheetDialog(
             this,
@@ -1908,7 +2113,7 @@ class DynamicFormActivity : BaseActivity() {
         val btnSave = dialog.findViewById<TextView>(R.id.btnSave)!!
         val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)!!
 
-        tvTitle.text = title
+        tvTitle.text = "Add $title"
 
         // reset global values
         facilityLat = null

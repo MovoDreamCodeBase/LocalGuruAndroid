@@ -32,7 +32,7 @@
             android:id="@+id/etLabel"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:hint="Label (e.g. Main Parking)"
+            android:hint="Label (e.g. Main Parking or Washroom)"
             android:background="@drawable/bg_input_bordered"
             android:padding="12dp"
             android:textSize="14sp"

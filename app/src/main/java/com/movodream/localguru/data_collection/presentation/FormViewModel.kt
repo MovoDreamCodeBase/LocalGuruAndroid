@@ -617,14 +617,32 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
                         obj.put("name", e.name)
                         obj.put("description", e.eventDescription)
-                        obj.put("date", e.date)
 
+                        // ✅ NEW
+                        obj.put("recurrenceType", e.recurrenceType.name)
+
+                        // ✅ DATE only for DATE type
+                        if (e.recurrenceType == RecurrenceType.DATE) {
+                            obj.put("date", e.date ?: "")
+                        }
+
+                        // ✅ WEEKLY only
+                        if (e.recurrenceType == RecurrenceType.WEEKLY) {
+                            val daysArr = JSONArray()
+                            e.weekDays.forEach { d -> daysArr.put(d.name) }
+                            obj.put("weekDays", daysArr)
+                        }
+
+                        // slots
                         val slotsArr = JSONArray()
                         e.slots.forEach { slot ->
                             slotsArr.put(
                                 JSONObject()
                                     .put("open", slot.open)
-                                    .put("close", slot.close)
+                                    .put(
+                                        "close",
+                                        if (slot.close >= 0) slot.close else JSONObject.NULL
+                                    )
                             )
                         }
 
@@ -635,6 +653,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                     valuesObj.put(fieldId, arr)
                     return@forEach
                 }
+
                 if (fieldType == "facility_list" && v is List<*>) {
 
                     val arr = JSONArray()
@@ -1031,34 +1050,72 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (fieldType == "event_list" && v is JSONArray) {
 
-                val list = mutableListOf<FormViewModel.Event>()
+                    val list = mutableListOf<FormViewModel.Event>()
 
-                for (i in 0 until v.length()) {
-                    val obj = v.getJSONObject(i)
+                    for (i in 0 until v.length()) {
+                        val obj = v.getJSONObject(i)
 
-                    val e = FormViewModel.Event(
-                        name = obj.getString("name"),
-                        eventDescription = obj.getString("description"),
-                        date = obj.getString("date")
-                    )
+                        // -----------------------------
+                        // 🔁 BACKWARD COMPATIBLE MIGRATION
+                        // -----------------------------
+                        val recurrenceType = when {
+                            obj.has("recurrenceType") ->
+                                RecurrenceType.valueOf(obj.getString("recurrenceType"))
 
-                    val slotsArr = obj.optJSONArray("slots") ?: JSONArray()
-                    for (j in 0 until slotsArr.length()) {
-                        val s = slotsArr.getJSONObject(j)
-                        e.slots.add(
-                            FormViewModel.TimeSlot(
-                                open = s.getInt("open"),
-                                close = s.getInt("close")
-                            )
+                            obj.has("weekDays") ->
+                                RecurrenceType.WEEKLY
+
+                            else ->
+                                RecurrenceType.DATE   // ✅ OLD drafts fallback
+                        }
+
+                        // -----------------------------
+                        // WEEK DAYS (if any)
+                        // -----------------------------
+                        val weekDays = mutableListOf<FormViewModel.WeekDay>()
+                        val weekArr = obj.optJSONArray("weekDays")
+                        if (weekArr != null) {
+                            for (j in 0 until weekArr.length()) {
+                                weekDays.add(
+                                    FormViewModel.WeekDay.valueOf(weekArr.getString(j))
+                                )
+                            }
+                        }
+
+                        // -----------------------------
+                        // EVENT OBJECT
+                        // -----------------------------
+                        val e = FormViewModel.Event(
+                            name = obj.getString("name"),
+                            eventDescription = obj.getString("description"),
+                            recurrenceType = recurrenceType,
+                            date = obj.optString("date").takeIf { it.isNotBlank() },
+                            weekDays = weekDays
                         )
+
+                        // -----------------------------
+                        // SLOTS (close is optional)
+                        // -----------------------------
+                        val slotsArr = obj.optJSONArray("slots") ?: JSONArray()
+                        for (j in 0 until slotsArr.length()) {
+                            val s = slotsArr.getJSONObject(j)
+
+                            e.slots.add(
+                                FormViewModel.TimeSlot(
+                                    open = s.getInt("open"),
+                                    close = if (s.isNull("close")) -1 else s.getInt("close")
+                                )
+                            )
+                        }
+
+                        list.add(e)
                     }
 
-                    list.add(e)
+                    restored[key] = list
+                    return@forEach
                 }
 
-                restored[key] = list
-                return@forEach
-            }
+
                 if (fieldType == "facility_list" && v is JSONArray) {
 
                     val list = mutableListOf<FormViewModel.FacilityPoint>()
@@ -1694,8 +1751,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             val events =
-                current.get("events") as? List<FormViewModel.Event>
-                    ?: emptyList()
+                current["events"] as? List<FormViewModel.Event> ?: emptyList()
 
             if (events.isNotEmpty()) {
 
@@ -1703,16 +1759,35 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
                 events.forEach { e ->
                     val obj = JSONObject()
+
                     obj.put("name", e.name)
                     obj.put("description", e.eventDescription)
-                    obj.put("date", e.date)
+                    obj.put("recurrenceType", e.recurrenceType.name)
 
+                    // DATE
+                    if (e.recurrenceType == RecurrenceType.DATE) {
+                        obj.put("date", e.date)
+                    }
+
+                    // WEEKLY
+                    if (e.recurrenceType == RecurrenceType.WEEKLY) {
+                        val daysArr = JSONArray()
+                        e.weekDays.forEach { d -> daysArr.put(d.name) }
+                        obj.put("weekDays", daysArr)
+                    }
+
+                    // SLOTS
                     val slotsArr = JSONArray()
                     e.slots.forEach { slot ->
                         slotsArr.put(
                             JSONObject()
                                 .put("open", minutesToHHMM(slot.open))
-                                .put("close", minutesToHHMM(slot.close))
+                                .put(
+                                    "close",
+                                    if (slot.close >= 0)
+                                        minutesToHHMM(slot.close)
+                                    else ""
+                                )
                         )
                     }
 
@@ -1722,6 +1797,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
                 payload["events"] = arr
             }
+
 
             val sourceVerification =
                 current["sourceVerification"] as? List<FormViewModel.SourceVerification>
@@ -2926,10 +3002,8 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         schema.tabs.forEach { tab ->
             tab.fields.forEach { field ->
 
-                //  Skip non-input fields
-                if (field.type in listOf("label", "divider", "section_header")) {
-                    return@forEach
-                }
+                // Skip non-input UI fields
+                if (field.type in listOf("label", "divider", "section_header")) return@forEach
 
                 totalFields++
 
@@ -2945,6 +3019,7 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
         _progressPercent.postValue(percentage)
     }
+
     private fun isFieldFilled(
         field: FieldSchema,
         values: Map<String, Any?>
@@ -2954,32 +3029,68 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
         return when (field.type) {
 
+            // ---------------- TEXT TYPES ----------------
             "text", "textarea", "select" ->
                 value is String && value.trim().isNotEmpty()
 
             "number" ->
-                value != null
+                value != null && value.toString().trim().isNotEmpty()
 
+            // ---------------- CHECKBOX ----------------
             "checkbox_group" ->
                 value is List<*> && value.isNotEmpty()
 
+            // ---------------- PHOTO ----------------
             "photo_list" ->
-                (photoUris[field.id]?.size ?: 0) > 0
+                (photoUris[field.id]?.isNotEmpty() == true) ||
+                        (photoUrls[field.id]?.isNotEmpty() == true)
 
+            // ---------------- TEXT LIST ----------------
             "text_list" ->
                 value is List<*> && value.any {
                     it?.toString()?.trim()?.isNotEmpty() == true
                 }
 
+            // ---------------- EVENTS ----------------
+            "event_list" ->
+                value is List<*> && value.isNotEmpty()
+
+            // ---------------- FACILITIES ----------------
+            "facility_list" ->
+                value is List<*> && value.isNotEmpty()
+
+            // ---------------- SECONDARY ADDRESS ----------------
+            "address_list" ->
+                value is List<*> && value.isNotEmpty()
+
+            // ---------------- SOURCE VERIFICATION ----------------
+            "source_verification" ->
+                value is List<*> && value.any {
+                    it is SourceVerification &&
+                            it.source.isNotBlank() &&
+                            it.comment.isNotBlank()
+                }
+
+            // ---------------- SUB POI ----------------
             "sub_poi_list" ->
                 value is List<*> && value.isNotEmpty()
 
+            // ---------------- OPERATIONAL HOURS ----------------
             "operational_hours" ->
                 value is List<*> && value.isNotEmpty()
+
+            // ---------------- CUSTOM METADATA ----------------
+            "custom_metadata_list" ->
+                value is List<*> && value.any {
+                    it is CustomMetadata &&
+                            it.label.isNotBlank() &&
+                            it.value.isNotBlank()
+                }
 
             else -> false
         }
     }
+
 
     fun fetchAccurateLocation() {
 
@@ -3027,10 +3138,24 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
     data class Event(
         val name: String,
-        val date: String,                // yyyy-MM-dd
-        val eventDescription: String,                // yyyy-MM-dd
+        val eventDescription: String,
+
+        // recurrence
+        val recurrenceType: RecurrenceType,          // DAILY / WEEKLY / DATE
+        val date: String? = null,                    // yyyy-MM-dd (only for DATE)
+        val weekDays: List<FormViewModel.WeekDay> = emptyList(), // only for WEEKLY
+
         val slots: MutableList<TimeSlot> = mutableListOf()
     )
+
+
+
+    enum class RecurrenceType {
+        DAILY,
+        WEEKLY,
+        DATE
+    }
+
     fun addEvent(e: Event) {
         val current =
             (valuesLive.value?.get("events") as? MutableList<Event>)

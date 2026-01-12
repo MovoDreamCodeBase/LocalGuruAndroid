@@ -65,9 +65,58 @@
             android:layout_marginBottom="12dp"/>
 
         <!-- ========================= -->
+        <!-- RECURRENCE TYPE -->
+        <!-- ========================= -->
+        <RadioGroup
+            android:id="@+id/rgRecurrence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/rbDaily"
+                android:textColor="@color/black"
+                android:text="Daily"
+
+                android:buttonTint="@color/checkbox_tint"
+                android:fontFamily="@font/dm_sans_regular"/>
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/rbWeekly"
+                android:textColor="@color/black"
+                android:text="Weekly"
+                android:buttonTint="@color/checkbox_tint"
+                android:fontFamily="@font/dm_sans_regular"/>
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/rbDate"
+                android:textColor="@color/black"
+                android:text="Select Date"
+                android:buttonTint="@color/checkbox_tint"
+                android:fontFamily="@font/dm_sans_regular"/>
+        </RadioGroup>
+
+        <!-- WEEK DAY SELECTION -->
+        <com.google.android.flexbox.FlexboxLayout
+            android:layout_marginTop="@dimen/_4sdp"
+            android:id="@+id/weekDayContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+
+
+        <!-- ========================= -->
         <!-- EVENT DATE -->
         <!-- ========================= -->
         <TextView
+            android:layout_marginTop="@dimen/_4sdp"
             android:id="@+id/tvEventDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -93,6 +142,7 @@
             android:layout_marginTop="8dp" />
 
         <TextView
+            android:layout_marginTop="@dimen/_4sdp"
             android:id="@+id/btnAddSlot"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
