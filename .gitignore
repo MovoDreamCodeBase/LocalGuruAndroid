@@ -1,0 +1,28 @@
+# Built files
+/build
+**/build/
+
+# Gradle files
+.gradle/
+gradle-app.setting
+
+# Local configuration
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Firebase / Google services
+**/google-services.json
+
+# Keystore files
+*.jks
+*.keystore
