@@ -44,7 +44,7 @@ android {
     // 🔹 SIGNING CONFIGS (THIS IS THE KEY PART)
     signingConfigs {
 
-        // ✅ QC / CI debug signing (shared)
+        //  QC / CI debug signing (shared)
         getByName("debug") {
             storeFile = file("ci-debug.keystore")
             storePassword = "android"
@@ -52,10 +52,12 @@ android {
             keyPassword = "android"
         }
 
-        // 🔐 Production signing (placeholder)
+        //  Production signing
         create("release") {
-            // These will come from CI secrets later
-            // DO NOT hardcode real values
+            storeFile = file("release.keystore")
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
         }
     }
 
