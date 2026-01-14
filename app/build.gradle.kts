@@ -21,14 +21,57 @@ android {
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    // 🔹 Used by CI to read versionName
     tasks.register("printVersionName") {
         doLast {
             println(android.defaultConfig.versionName)
         }
     }
+    flavorDimensions += "environment"
+    productFlavors {
+
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+
+        }
+
+        create("prod") {
+            dimension = "environment"
+
+        }
+    }
+
+    // 🔹 SIGNING CONFIGS (THIS IS THE KEY PART)
+    signingConfigs {
+
+        // ✅ QC / CI debug signing (shared)
+        getByName("debug") {
+            storeFile = file("ci-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+
+        // 🔐 Production signing (placeholder)
+        create("release") {
+            // These will come from CI secrets later
+            // DO NOT hardcode real values
+        }
+    }
 
     buildTypes {
+
+        // 🔹 QC build
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+
+        // 🔹 Production build
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -36,18 +79,22 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures{
+
+    buildFeatures {
         dataBinding = true
         buildConfig = true
     }
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)

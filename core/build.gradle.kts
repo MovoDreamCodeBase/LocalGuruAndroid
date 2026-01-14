@@ -6,44 +6,51 @@ plugins {
 
 android {
     namespace = "com.core"
+
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
         minSdk = 24
-
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
+
     buildFeatures {
         buildConfig = true
         dataBinding = true
     }
 
-    buildTypes {
-        debug {
-            buildConfigField("String", "PREFERENCE", "\"PREFERENCE\"")
-        }
-        release {
+    flavorDimensions += "environment"
 
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            buildConfigField("String", "PREFERENCE", "\"PREFERENCE_DEV\"")
+        }
+        create("prod") {
+            dimension = "environment"
             buildConfigField("String", "PREFERENCE", "\"PREFERENCE\"")
         }
     }
+
+    buildTypes {
+        debug { }
+        release { }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)

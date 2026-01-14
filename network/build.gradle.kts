@@ -20,18 +20,34 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    flavorDimensions += "environment"
+
+    productFlavors {
+
+        create("dev") {
+            dimension = "environment"
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\""
+            )
+        }
+
+        create("prod") {
+            dimension = "environment"
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\""
+            )
+        }
+    }
+
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\"")
-        }
+         }
         release {
 
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            buildConfigField("String", "BASE_URL", "\"https://studentmanagement20251120231138-f2d3fbcuguf0a4gy.eastasia-01.azurewebsites.net/api/\"")
         }
     }
     compileOptions {

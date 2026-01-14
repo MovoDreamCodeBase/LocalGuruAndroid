@@ -37,10 +37,16 @@ jobs:
           echo "BUILD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
           echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
+      - name: Decode CI debug keystore
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          echo "${{ secrets.CI_DEBUG_KEYSTORE }}" | base64 --decode > app/ci-debug.keystore
+
       # 🔹 QC build
       - name: Build Debug APK (QC)
         if: github.ref == 'refs/heads/dev'
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDevDebug
+
 
       # 🔹 Upload APK with enterprise naming
       - name: Upload Debug APK (QC)
@@ -48,9 +54,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: qc-debug-apk_v${{ env.VERSION_NAME }}_${{ env.BUILD_DATE }}_${{ github.run_number }}_${{ env.SHORT_SHA }}
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/dev/debug/app-dev-debug.apk
+
 
       # 🔹 Production build
       - name: Build Release AAB (Production)
         if: github.ref == 'refs/heads/main'
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleProdRelease
+
