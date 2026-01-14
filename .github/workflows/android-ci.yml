@@ -98,56 +98,104 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleDevRelease
 
-      # -----------------------------
-      # 9️⃣ Build SIGNED DEV Release AAB
-      # -----------------------------
-      - name: Build Signed Release AAB (DEV)
+#      # -----------------------------
+#      # 9️⃣ Build SIGNED DEV Release AAB
+#      # -----------------------------
+#      - name: Build Signed Release AAB (DEV)
+#        if: github.ref == 'refs/heads/dev'
+#        env:
+#          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+#          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+#          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+#        run: ./gradlew bundleDevRelease
+#
+#      # -----------------------------
+#      # 🔟 Upload SIGNED DEV Release APK (GitHub Artifact)
+#      # -----------------------------
+#      - name: Upload Signed Release APK (DEV)
+#        if: github.ref == 'refs/heads/dev'
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: dev-release-apk
+#          path: app/build/outputs/apk/dev/release/app-dev-release.apk
+#
+#      # -----------------------------
+#      # 1️⃣1️⃣ Upload SIGNED DEV Release AAB (GitHub Artifact)
+#      # -----------------------------
+#      - name: Upload Signed Release AAB (DEV)
+#        if: github.ref == 'refs/heads/dev'
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: dev-release-aab
+#          path: app/build/outputs/bundle/devRelease/app-dev-release.aab
+
+      # ============================================================
+      # 🔥 FIREBASE APP DISTRIBUTION (DEV ONLY)
+      # ============================================================
+
+      # Install Firebase CLI
+      - name: Install Firebase CLI
+        if: github.ref == 'refs/heads/dev'
+        run: npm install -g firebase-tools
+
+      # Decode Firebase service account
+      - name: Decode Firebase service account
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > firebase-service-account.json
+
+      # Upload APK to Firebase App Distribution (INSTALL LINK GENERATED)
+      - name: Upload APK to Firebase App Distribution
         if: github.ref == 'refs/heads/dev'
         env:
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew bundleDevRelease
-
-      # -----------------------------
-      # 🔟 Upload SIGNED DEV Release APK
-      # -----------------------------
-      - name: Upload Signed Release APK (DEV)
-        if: github.ref == 'refs/heads/dev'
-        uses: actions/upload-artifact@v4
-        with:
-          name: dev-release-apk
-          path: app/build/outputs/apk/dev/release/app-dev-release.apk
-
-      # -----------------------------
-      # 1️⃣1️⃣ Upload SIGNED DEV Release AAB
-      # -----------------------------
-      - name: Upload Signed Release AAB (DEV)
-        if: github.ref == 'refs/heads/dev'
-        uses: actions/upload-artifact@v4
-        with:
-          name: dev-release-aab
-          path: app/build/outputs/bundle/devRelease/app-dev-release.aab
+          GOOGLE_APPLICATION_CREDENTIALS: firebase-service-account.json
+        run: |
+          firebase appdistribution:distribute \
+            app/build/outputs/apk/dev/release/app-dev-release.apk \
+            --app 1:996486041848:android:ce744cf515fcce18e3ab0d \
+            --groups "qa,internal" \
+            --release-notes "CI build #${{ github.run_number }} - ${{ github.sha }}"
 
       # ============================================================
       # 🔹 MAIN BRANCH (PRODUCTION)
       # ============================================================
 
-      # -----------------------------
-      # 1️⃣2️⃣ Decode RELEASE keystore (PROD)
-      # -----------------------------
-      - name: Decode release keystore (PROD)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > app/release.keystore
-
-      # -----------------------------
-      # 1️⃣3️⃣ Build SIGNED PROD Release AAB (NO UPLOAD)
-      # -----------------------------
-      - name: Build Release AAB (Production)
-        if: github.ref == 'refs/heads/main'
-        env:
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew bundleProdRelease
+      # Decode RELEASE keystore
+#      - name: Decode release keystore (PROD)
+#        if: github.ref == 'refs/heads/main'
+#        run: |
+#          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > app/release.keystore
+#
+#      # Build SIGNED PROD Release APK
+#      - name: Build Signed Production APK
+#        if: github.ref == 'refs/heads/main'
+#        env:
+#          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+#          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+#          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+#        run: ./gradlew assembleProdRelease
+#
+#      # Build SIGNED PROD Release AAB
+#      - name: Build Release AAB (Production)
+#        if: github.ref == 'refs/heads/main'
+#        env:
+#          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+#          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+#          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+#        run: ./gradlew bundleProdRelease
+#
+#      # Upload SIGNED PROD Release APK
+#      - name: Upload Release APK (Production)
+#        if: github.ref == 'refs/heads/main'
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: prod-release-apk
+#          path: app/build/outputs/apk/prod/release/app-prod-release.apk
+#
+#      # Upload SIGNED PROD Release AAB
+#      - name: Upload Release AAB (Production)
+#        if: github.ref == 'refs/heads/main'
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: prod-release-aab
+#          path: app/build/outputs/bundle/prodRelease/app-prod-release.aab
