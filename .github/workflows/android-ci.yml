@@ -1,10 +1,11 @@
 name: Android CI
 
 on:
-  push:
-    branches:
-      - dev        # 🔹 QC / learning / internal builds
-      - main       # 🔹 Production builds
+  workflow_dispatch:
+#  push:
+#    branches:
+#      - dev        # 🔹 QC / learning / internal builds
+#      - main       # 🔹 Production builds
 
 jobs:
   build:
