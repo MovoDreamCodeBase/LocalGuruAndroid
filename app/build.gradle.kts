@@ -21,6 +21,11 @@ android {
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    tasks.register("printVersionName") {
+        doLast {
+            println(android.defaultConfig.versionName)
+        }
+    }
 
     buildTypes {
         release {

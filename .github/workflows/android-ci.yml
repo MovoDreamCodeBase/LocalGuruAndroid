@@ -23,17 +23,34 @@ jobs:
       - name: Grant permission to Gradle
         run: chmod +x gradlew
 
+      # 🔹 Extract versionName from Gradle
+      - name: Extract versionName
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          VERSION_NAME=$(./gradlew -q printVersionName)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      # 🔹 Set build metadata
+      - name: Set build metadata
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          echo "BUILD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      # 🔹 QC build
       - name: Build Debug APK (QC)
         if: github.ref == 'refs/heads/dev'
         run: ./gradlew assembleDebug
 
+      # 🔹 Upload APK with enterprise naming
       - name: Upload Debug APK (QC)
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
-          name: qc-debug-apk
+          name: qc-debug-apk_v${{ env.VERSION_NAME }}_${{ env.BUILD_DATE }}_${{ github.run_number }}_${{ env.SHORT_SHA }}
           path: app/build/outputs/apk/debug/app-debug.apk
 
+      # 🔹 Production build
       - name: Build Release AAB (Production)
         if: github.ref == 'refs/heads/main'
         run: ./gradlew bundleRelease
