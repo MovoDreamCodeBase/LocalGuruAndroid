@@ -148,13 +148,14 @@ jobs:
       - name: Upload APK to Firebase App Distribution
         if: github.ref == 'refs/heads/dev'
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: firebase-service-account.json
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
         run: |
           firebase appdistribution:distribute \
             app/build/outputs/apk/dev/release/app-dev-release.apk \
             --app 1:996486041848:android:ce744cf515fcce18e3ab0d \
             --groups "qa,internal" \
             --release-notes "CI build #${{ github.run_number }} - ${{ github.sha }}"
+      
 
       # ============================================================
       # 🔹 MAIN BRANCH (PRODUCTION)
