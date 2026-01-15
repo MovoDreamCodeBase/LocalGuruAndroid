@@ -1,0 +1,57 @@
+name: Android CI – DEV
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Grant Gradle permission
+        run: chmod +x gradlew
+
+      - name: Extract versionName
+        run: |
+          VERSION_NAME=$(./gradlew -q printVersionName)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      - name: Set build metadata
+        run: |
+          echo "BUILD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Decode CI debug keystore
+        run: |
+          echo "${{ secrets.CI_DEBUG_KEYSTORE }}" | base64 --decode > app/ci-debug.keystore
+
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > app/release.keystore
+
+      - name: Build Signed DEV Release APK
+        env:
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleDevRelease
+
+      - name: Upload APK to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: 1:996486041848:android:ce744cf515fcce18e3ab0d
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: qa,internal
+          file: app/build/outputs/apk/dev/release/app-dev-release.apk
+          releaseNotes: |
+            DEV CI Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
