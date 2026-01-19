@@ -4,8 +4,10 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -393,6 +395,7 @@ class DashboardActivity : BaseActivity() {
                     ).show()
                     dashboardViewModel.resetMasterState()
                     if(isFromDashboard){
+                        MyPreference.setValueInt(PrefKey.MASTER_VERSION,getVersionCode(this@DashboardActivity))
                         //  After download → fetch from DB
                         val categoryId = selectedPOI.categoryId.toString()
 
@@ -698,7 +701,11 @@ class DashboardActivity : BaseActivity() {
             categoryId = categoryId,
 
             onReady = { schema ->
-                openDynamicForm(schema, selectedPOI)
+                if(checkMasterVersionDowngraded()){
+                    dashboardViewModel.refreshCategoryMaster()
+                }else {
+                    openDynamicForm(schema, selectedPOI)
+                }
             },
 
             onNeedDownload = {
@@ -725,6 +732,31 @@ class DashboardActivity : BaseActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             binding.bottomNav.selectItem(0)
             callDashboardAPI()
+        }
+    }
+    private fun checkMasterVersionDowngraded(): Boolean{
+        val masterVersion : Int = MyPreference.getValueInt(PrefKey.MASTER_VERSION,0)
+       if(masterVersion==0 ||masterVersion< getVersionCode(this@DashboardActivity)){
+           return true
+       }
+        return false;
+    }
+
+    fun getVersionCode(context: Context): Int {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(
+                context.packageName,
+                0
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode
+            }
+        } catch (e: PackageManager.NameNotFoundException) {
+            0
         }
     }
 

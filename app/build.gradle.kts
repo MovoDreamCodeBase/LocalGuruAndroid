@@ -46,10 +46,10 @@ android {
 
         //  QC / CI debug signing (shared)
         getByName("debug") {
-            storeFile = file("ci-debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+//            storeFile = file("ci-debug.keystore")
+//            storePassword = "android"
+//            keyAlias = "androiddebugkey"
+//            keyPassword = "android"
         }
 
         //  Production signing

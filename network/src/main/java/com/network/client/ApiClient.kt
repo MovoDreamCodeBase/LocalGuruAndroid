@@ -92,6 +92,7 @@ class ApiClient {
                             .build()
                     chain.proceed(request)
                 })
+
                     .protocols(Arrays.asList(Protocol.HTTP_1_1))
                     .readTimeout(1, TimeUnit.MINUTES)
                     .connectTimeout(1, TimeUnit.MINUTES)
@@ -109,6 +110,7 @@ class ApiClient {
                         builder.addInterceptor(logging)
                     }
                 }
+
                 // Create a trust manager that does not validate certificate chains
                 val trustAllCerts = arrayOf<TrustManager>(
                     object : X509TrustManager {

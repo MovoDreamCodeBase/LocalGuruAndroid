@@ -127,13 +127,15 @@ class DynamicFormActivity : BaseActivity() {
         val schema : FormSchema? = intent.getParcelableExtra("KEY_SCHEMA") as FormSchema?
         selectedPOI =
             intent.getParcelableExtra("KEY_POI") as TaskItem?
-        selectedPOI?.let { poiId = it.poiId }
+        selectedPOI?.let { poiId = it.poiId
+
+        }
 
         vm = ViewModelProvider(
             this,
             ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         )[FormViewModel::class.java]
-
+         vm._poiId.value = poiId.toString()
         vm._isRevisionState.value = intent.getBooleanExtra("KEY_IS_REVISION",false)
         permissionUtils = PermissionUtils(this)
         titleTv = findViewById(R.id.title)
@@ -333,6 +335,8 @@ class DynamicFormActivity : BaseActivity() {
                 lastShownTabId = nextTab.id
                 tabAdapter.highlightTab(nextTab.id)
                 showTab(nextTab.id)
+
+
             } else {
 
 
@@ -640,6 +644,8 @@ class DynamicFormActivity : BaseActivity() {
 
     private fun showTab(tabId: String) {
         lastShownTabId = tabId
+        vm.setCurrentTab(tabId)
+
         val schema = vm.schemaLive.value ?: return
         val tab = schema.tabs.firstOrNull { it.id == tabId } ?: return
         //  Ensure only when operational hours tab opens
@@ -800,6 +806,10 @@ class DynamicFormActivity : BaseActivity() {
                 vm.updateValue("localityTown", city)
                 vm.updateValue("regionState", state)
                 vm.updateValue("country", country)
+                if(Utils.getDeviceTimeZoneId().isNotEmpty()){
+                    vm.updateValue("timezoneIana", Utils.getDeviceTimeZoneId())
+
+                }
             }
 
             vm.updateValue("pinVerifiedViaGps", "Y")

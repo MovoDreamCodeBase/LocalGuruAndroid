@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.core.utils.DebugLog
 import com.core.utils.Utils
@@ -34,6 +35,7 @@ import com.network.model.BulkSubPoiItem
 import com.network.model.ResponseData
 import com.network.model.ResponseListData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
@@ -96,6 +98,39 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _progressPercent = MutableLiveData<Int>()
     val progressPercent: LiveData<Int> = _progressPercent
+
+    //Auto save
+    // ================= AUTO SAVE =================
+    private val _draftSaveState = MutableLiveData<SaveState>()
+    val draftSaveState: LiveData<SaveState> = _draftSaveState
+
+
+    sealed class SaveState {
+        object Idle : SaveState()
+        object Saving : SaveState()
+        object Saved : SaveState()
+        data class Error(val msg: String) : SaveState()
+    }
+
+    private var isRestoringDraft = false
+    private var lastSavedHash: Int = 0
+
+
+    init {
+        observeAutoSave()
+    }
+// ================= CURRENT TAB TRACKING =================
+
+    private val _currentTabId = MutableLiveData<String>()
+     var _poiId = MutableLiveData<String>()
+
+    fun setCurrentTab(tabId: String) {
+        _currentTabId.value = tabId
+    }
+
+    private fun getCurrentTabId(): String? {
+        return _currentTabId.value
+    }
 
 
     private fun extractCategoryOptions(schema: FormSchema) {
@@ -745,6 +780,8 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
                 withContext(Dispatchers.Main) { onLoaded() }
                 return@launch
             }
+            // STOP auto-save
+            isRestoringDraft = true
 
             val json = JSONObject(draft.draftJson)
             val valuesObj = json.getJSONObject("values")
@@ -1189,7 +1226,9 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
 
             valuesLive.postValue(restored)
             calculateProgress()
-
+            // ✅ sync hash
+            lastSavedHash = restored.hashCode()
+            isRestoringDraft = false
             withContext(Dispatchers.Main) { onLoaded() }
         }
     }
@@ -3301,5 +3340,50 @@ class FormViewModel(app: Application) : AndroidViewModel(app) {
         var comment: String = ""
     )
 
+//Auto Save
+
+    private fun observeAutoSave() {
+
+        viewModelScope.launch {
+
+            valuesLive
+                .asFlow()
+                .debounce(800)                 // ✅ DB throttle
+                .collect { values ->
+
+                    if (isRestoringDraft) return@collect
+
+                    val tabId = _currentTabId.value ?: return@collect
+
+                    // 🔐 hash AFTER deep copy safety
+                    val safeHash = values.toString().hashCode()
+                    if (safeHash == lastSavedHash) return@collect
+
+                    // 🚫 DO NOT VALIDATE here
+                    // Validation remains on Save button ONLY
+
+                    try {
+                        _draftSaveState.postValue(SaveState.Saving)
+
+                        saveDraftForTab(tabId)
+
+                        // ✅ Safe POI id
+                        val poiIdSafe =
+                            _poiId.value
+                                ?: return@collect
+
+                        saveDraftToRoom(poiIdSafe)
+
+                        lastSavedHash = safeHash
+                        _draftSaveState.postValue(SaveState.Saved)
+
+                    } catch (e: Exception) {
+                        _draftSaveState.postValue(
+                            SaveState.Error("Auto-save failed")
+                        )
+                    }
+                }
+        }
+    }
 
 }

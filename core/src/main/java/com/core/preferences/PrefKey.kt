@@ -17,5 +17,6 @@ object PrefKey {
     const val LONGITUDE = "longs"
 
     const val LOGIN_DATE = "login_date"
+    const val MASTER_VERSION = "master_version"
 
 }

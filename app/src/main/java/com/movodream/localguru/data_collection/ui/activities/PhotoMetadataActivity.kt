@@ -73,14 +73,14 @@ class PhotoMetadataActivity : BaseActivity() {
                 it.label.trim().isEmpty() || it.description.trim().isEmpty()
             }
 
-            if (invalidItem != null) {
-                Toast.makeText(
-                    this,
-                    "Please enter label and description for all photos",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
-            }
+//            if (invalidItem != null) {
+//                Toast.makeText(
+//                    this,
+//                    "Please enter label and description for all photos",
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//                return@setOnClickListener
+//            }
 
             val data = Intent().apply {
                 putExtra("fieldId", fieldId)

@@ -146,6 +146,7 @@ class DynamicFormAdapter(
             view.isEnabled = false
             view.isFocusable = false
             view.isFocusableInTouchMode = false
+            view.alpha = 0.5f
             //  view.setTextColor(Color.GRAY)
         }
         private fun formatSlots(slots: List<FormViewModel.TimeSlot>): String {
@@ -440,7 +441,7 @@ class DynamicFormAdapter(
                     // 🔒 Make read-only only when data exists
                     if (field.id == "localityTown" ||
                         field.id == "regionState" ||
-                        field.id == "country"||field.id == "siteName"||field.id == "collectorId") {
+                        field.id == "country"||field.id == "siteName"||field.id == "collectorId"||field.id == "timezoneIana") {
 
                         val currentVal = (value as? String)?.trim().orEmpty()
 
@@ -482,6 +483,17 @@ class DynamicFormAdapter(
                         typeface = ResourcesCompat.getFont(itemView.context, com.core.R.font.dm_sans_medium)
                         setTextColor(context.getColor(android.R.color.black))
                         setHintTextColor(Color.parseColor("#9E9E9E"))
+                    }
+
+                    // 🔒 Make read-only only when data exists
+                    if (field.id == "physicalAddress"
+                       ) {
+
+                        val currentVal = (value as? String)?.trim().orEmpty()
+
+                        if (currentVal.isNotEmpty()) {
+                            makeReadOnly(et)
+                        }
                     }
 
                     et.addTextChangedListener(SimpleTextWatcher { onFieldChanged(field.id, it) })
@@ -557,7 +569,7 @@ class DynamicFormAdapter(
                         et.isFocusable = false
                         et.isFocusableInTouchMode = false
                         et.isClickable = false
-                        // et.alpha = 0.6f   // Optional: visually show disabled state
+                         et.alpha = 0.5f   // Optional: visually show disabled state
                     }
                     host.addView(container)
                 }
